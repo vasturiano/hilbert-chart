@@ -275,8 +275,8 @@ export default function() {
                 return !d.pathVertices.length;
             })
             .text(function(d) {
-                var MAX_TEXT_COMPRESSION = 0.25;
-                return (d.name.length / d.cellWidth > MAX_TEXT_COMPRESSION) ? '' : d.name;
+                var MAX_TEXT_COMPRESSION = 10;
+                return (d.name.length > MAX_TEXT_COMPRESSION) ? '' : d.name;
             })
             .attr('textLength', function(d) {
                 var MAX_TEXT_EXPANSION = 0.15;
