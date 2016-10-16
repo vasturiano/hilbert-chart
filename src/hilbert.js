@@ -46,19 +46,40 @@ export default function() {
 
         svg.append('defs');
 
-        var hilbertCanvas = svg.append('g')
-            .attr('class', 'hilbert-canvas')
+        var zoomCanvas = svg.append('g')
             .attr('transform', 'translate(' + margin + ',' + margin + ')');
 
-        hilbertCanvas.append('rect')
+        zoomCanvas.append('rect')
             .attr('x', 0)
             .attr('y', 0)
             .attr('width', canvasWidth)
             .attr('height', canvasWidth)
             .attr('fill', 'white');
 
+        var hilbertCanvas = zoomCanvas.append('g')
+            .attr('class', 'hilbert-canvas');
+
         hilbertCanvas.append('g').attr('class', 'ranges-canvas');
         hilbertCanvas.append('g').attr('class', 'markers-canvas');
+
+        // Zoom interaction
+        zoomCanvas.call(d3.zoom()
+            //.translateExtent([[0, 0], [canvasWidth, canvasWidth]])
+            .scaleExtent([1, Infinity])
+            .on('zoom', function() {
+                hilbertCanvas.attr('transform', d3.event.transform);
+            })
+        );
+
+        svg.select('defs').append('clipPath')
+            .attr('id', 'canvas-cp')
+            .append('rect')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('width', canvasWidth)
+                .attr('height', canvasWidth);
+
+        zoomCanvas.attr("clip-path", "url(#canvas-cp)");
 
         // Range Tooltip
         rangeTooltip = d3Tip()
