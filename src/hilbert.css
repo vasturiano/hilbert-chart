@@ -1,7 +1,7 @@
 .hilbert-chart {
     .hilbert-segment path {
         fill: none;
-        opacity: 0.85;
+        opacity: 0.8;
         stroke-width: 0.97;
         stroke-linecap: square;
     }

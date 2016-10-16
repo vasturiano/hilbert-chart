@@ -103,7 +103,7 @@ export default function() {
         // Range Tooltip
         rangeTooltip = d3Tip()
             .attr('class', 'hilbert-tooltip')
-            .offset([-15, 0])
+            .offset([-30, 0])
             .html(function(d) {
                 return '<b>' + d.name + '</b>: ' + rangeFormatter(d);
             });
@@ -199,7 +199,7 @@ export default function() {
 
         newPaths.append('path')
             .on('mouseenter', function() { d3.select(this).transition().duration(200).style('opacity', 1); })
-            .on('mouseleave', function() { d3.select(this).transition().duration(400).style('opacity', 0.85); });
+            .on('mouseleave', function() { d3.select(this).transition().duration(400).style('opacity', 0.8); });
 
         newPaths.append('text')
             .attr('dominant-baseline', 'middle')
@@ -249,40 +249,17 @@ export default function() {
                 (d.pathVertices.length + 1) * 0.25, // Max 25% path length
                 canvasWidth / d.cellWidth * 0.03    // Max 3% of canvas size
             ]); })
-            /*.text(function(d) {
-             return d.name;
-             })*/
-            /*.attr('x', function() {
-             //var bbox = this.parentNode.getBBox();
-             var bbox = d3.select(this.parentNode).select('path').node().getBBox();
-             console.log(d3.select(this.parentNode).select('path').node().getBBox(), this.parentNode.getBBox(), this.parentNode.getBoundingClientRect());
-             return bbox.x + bbox.width / 2;
-             })
-             .attr('y', function() {
-             //var bbox = this.parentNode.getBBox();
-             var bbox = d3.select(this.parentNode).select('path').node().getBBox();
-
-             return bbox.y + bbox.height / 2;
-             })
-             .attr('transform', function() {
-             var pathBbox = d3.select(this.parentNode).select('path').node().getBoundingClientRect(),
-             textBbox = this.getBoundingClientRect();
-
-             return 'scale(' + Math.min(pathBbox.width/textBbox.width, pathBbox.height/textBbox.height) + ')';
-             })*/
-            // Those with no path (plain square)
-            .filter(function(d) {
-                return !d.pathVertices.length;
-            })
-            .text(function(d) {
-                var MAX_TEXT_COMPRESSION = 10;
-                return (d.name.length > MAX_TEXT_COMPRESSION) ? '' : d.name;
-            })
-            .attr('textLength', function(d) {
-                var MAX_TEXT_EXPANSION = 0.15;
-                return Math.min(0.95, d.name.length * MAX_TEXT_EXPANSION);
-            })
-            .attr('text-anchor', 'middle');
+            .filter(function(d) { return !d.pathVertices.length; })
+                // Those with no path (plain square)
+                .text(function(d) {
+                    var MAX_TEXT_COMPRESSION = 10;
+                    return (d.name.length > MAX_TEXT_COMPRESSION) ? '' : d.name;
+                })
+                .attr('textLength', function(d) {
+                    var MAX_TEXT_EXPANSION = 0.15;
+                    return Math.min(0.95, d.name.length * MAX_TEXT_EXPANSION);
+                })
+                .attr('text-anchor', 'middle');
     }
 
     function getHilbertPath(vertices) {
