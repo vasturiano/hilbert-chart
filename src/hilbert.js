@@ -67,7 +67,26 @@ export default function() {
             //.translateExtent([[0, 0], [canvasWidth, canvasWidth]])
             .scaleExtent([1, Infinity])
             .on('zoom', function() {
+                // Translate canvas
                 hilbertCanvas.attr('transform', d3.event.transform);
+
+                // Adjust axises
+                var xScale = d3.event.transform.rescaleX(axisScaleX);
+                var yScale = d3.event.transform.rescaleY(axisScaleY);
+                axises.select('.axis-left').call(axisLeft.scale(yScale));
+                axises.select('.axis-right').call(axisRight.scale(yScale));
+                axises.select('.axis-top').call(axisTop.scale(xScale))
+                    .selectAll('text')
+                        .attr("x", 9)
+                        .attr("dy", ".35em")
+                        .attr("transform", "rotate(-45)")
+                        .style("text-anchor", "start");
+                axises.select('.axis-bottom').call(axisBottom.scale(xScale))
+                    .selectAll('text')
+                        .attr("x", -9)
+                        .attr("dy", ".35em")
+                        .attr("transform", "rotate(-45)")
+                        .style("text-anchor", "end");
             })
         );
 
@@ -115,35 +134,46 @@ export default function() {
             .attr("transform", "translate(" + margin + "," + margin + ")"),
             nTicks = Math.pow(2, 3),
             nCells = Math.pow(2, order),
-            axisScale = d3.scaleLinear()
+            axisScaleX = d3.scaleLinear()
                 .domain([0, nTicks])
                 .range([0, canvasWidth]),
+            axisScaleY = axisScaleX.copy(),
             getTickFormatter = function(xPreset, yPreset) {
                 return function(d) {
                     d *= canvasWidth / nTicks;
+                    d = Math.min(d, canvasWidth - 0.001);
                     return valFormatter(hilbert.getValAtXY(xPreset != null ? xPreset : d, yPreset != null ? yPreset : d));
                 }
-            };
+            },
+            axisLeft = d3.axisLeft(axisScaleY).tickFormat(getTickFormatter(0)),
+            axisRight = d3.axisRight(axisScaleY).tickFormat(getTickFormatter(canvasWidth * (1 - 1/nCells))),
+            axisTop = d3.axisTop(axisScaleX).tickFormat(getTickFormatter(null, 0)),
+            axisBottom = d3.axisBottom(axisScaleX).tickFormat(getTickFormatter(null, canvasWidth * (1 - 1/nCells)));
+
         axises.append("g")
-            .call(d3.axisLeft(axisScale).tickValues(d3.range(nTicks)).tickFormat(getTickFormatter(0)));
+            .attr('class', 'axis-left')
+            .call(axisLeft);
         axises.append("g")
-            .call(d3.axisRight(axisScale).tickValues(d3.range(nTicks)).tickFormat(getTickFormatter(canvasWidth - canvasWidth / nCells)))
+            .attr('class', 'axis-right')
+            .call(axisRight)
             .attr("transform", "translate(" + canvasWidth + ",0)");
         axises.append("g")
-            .call(d3.axisTop(axisScale).tickValues(d3.range(nTicks)).tickFormat(getTickFormatter(null, 0)))
+            .attr('class', 'axis-top')
+            .call(axisTop)
             .selectAll("text")
-            .attr("x", 9)
-            .attr("dy", ".35em")
-            .attr("transform", "rotate(-45)")
-            .style("text-anchor", "start");
+                .attr("x", 9)
+                .attr("dy", ".35em")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "start");
         axises.append("g")
-            .call(d3.axisBottom(axisScale).tickValues(d3.range(nTicks)).tickFormat(getTickFormatter(null, canvasWidth - canvasWidth / nCells)))
+            .attr('class', 'axis-bottom')
+            .call(axisBottom)
             .attr("transform", "translate(0," + canvasWidth + ")")
             .selectAll("text")
-            .attr("x", -9)
-            .attr("dy", ".35em")
-            .attr("transform", "rotate(-45)")
-            .style("text-anchor", "end");
+                .attr("x", -9)
+                .attr("dy", ".35em")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end");
     }
 
     function d3Digest(ranges) {
