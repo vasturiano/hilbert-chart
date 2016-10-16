@@ -197,7 +197,10 @@ export default function() {
             .on('mouseover', rangeTooltip.show)
             .on('mouseout', rangeTooltip.hide);
 
-        newPaths.append('path');
+        newPaths.append('path')
+            .on('mouseenter', function() { d3.select(this).transition().duration(200).style('opacity', 1); })
+            .on('mouseleave', function() { d3.select(this).transition().duration(400).style('opacity', 0.85); });
+
         newPaths.append('text')
             .attr('dominant-baseline', 'middle')
             .append('textPath')
@@ -214,17 +217,9 @@ export default function() {
                     var MAX_TEXT_COMPRESSION = 16;
                     var name = d.name;
 
-                    /*
-                    var MIN_FILL_RATIO = 4;
-                    while(name.length / d.pathVertices.length < MIN_FILL_RATIO) {
-                        name += '. . ';
-                        name += name;
-                    }
-                    */
-                    return (!d.pathVertices.length || d.name.length / d.pathVertices.length > MAX_TEXT_COMPRESSION) ? '' : name /*d.name*/ ;
+                    return (!d.pathVertices.length || d.name.length / d.pathVertices.length > MAX_TEXT_COMPRESSION) ? '' : name;
                 })
                 .attr('textLength', function(d) {
-                    //return d.pathVertices.length;
                     var MAX_TEXT_EXPANSION = 0.4;
                     return Math.min(d.pathVertices.length, d.name.length * MAX_TEXT_EXPANSION);
                 })
@@ -249,7 +244,11 @@ export default function() {
             });
 
         rangePaths.selectAll('text')
-            .attr('font-size', function(d) { return 1.4 / Math.sqrt(d.cellWidth); })
+            .attr('font-size', function(d) { return d3.min([
+                0.25,                               // Max 25% of path height
+                (d.pathVertices.length + 1) * 0.25, // Max 25% path length
+                canvasWidth / d.cellWidth * 0.03    // Max 3% of canvas size
+            ]); })
             /*.text(function(d) {
              return d.name;
              })*/
