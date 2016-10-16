@@ -1,4 +1,4 @@
-# Timelines Chart
+# Hilbert Chart
 
 A hilbert space-filling curve D3 chart for representing one-dimensional lengths on a two-dimensional space.
 
