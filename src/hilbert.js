@@ -214,10 +214,10 @@ export default function() {
                     return '#' + id;
                 })
                 .text(function(d) {
-                    var MAX_TEXT_COMPRESSION = 16;
+                    var MAX_TEXT_COMPRESSION = 10;
                     var name = d.name;
 
-                    return (!d.pathVertices.length || d.name.length / d.pathVertices.length > MAX_TEXT_COMPRESSION) ? '' : name;
+                    return (!d.pathVertices.length || d.name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
                 })
                 .attr('textLength', function(d) {
                     var MAX_TEXT_EXPANSION = 0.4;
