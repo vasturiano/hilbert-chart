@@ -31,7 +31,7 @@ var myChart = HilbertChart();
 myChart(<myDOMElement>, <myData>, <hilbertOrder>);
 ```
 
-## API functionality
+## API reference
 
 ```
 HilbertChart()
