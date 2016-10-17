@@ -64,7 +64,7 @@ export default function() {
 
         // Zoom interaction
         zoomCanvas.call(d3.zoom()
-            //.translateExtent([[0, 0], [canvasWidth, canvasWidth]])
+            .translateExtent([[0, 0], [canvasWidth + margin * 2, canvasWidth + margin * 2]])
             .scaleExtent([1, Math.pow(2, order)])
             .on('zoom', function() {
                 // Translate canvas
@@ -132,7 +132,6 @@ export default function() {
         });
 
         // Setup axises
-        console.log(canvasWidth);
         var axises = svg.append('g')
             .attr('class', 'hilbert-axises')
             .attr("transform", "translate(" + margin + "," + margin + ")"),
