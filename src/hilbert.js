@@ -17,7 +17,7 @@ export default function() {
             return val;
         },
         rangeFormatter = function(d) {
-            return valFormatter(d.start) + ' - ' + valFormatter(d.start + d.length);
+            return valFormatter(d.start) + (d.length > 1 ? ' - ' + valFormatter(d.start + d.length - 1) : '');
         },
         rangeTooltip;
 
@@ -65,7 +65,7 @@ export default function() {
         // Zoom interaction
         zoomCanvas.call(d3.zoom()
             //.translateExtent([[0, 0], [canvasWidth, canvasWidth]])
-            .scaleExtent([1, Infinity])
+            .scaleExtent([1, Math.pow(2, order)])
             .on('zoom', function() {
                 // Translate canvas
                 hilbertCanvas.attr('transform', d3.event.transform);
@@ -73,6 +73,9 @@ export default function() {
                 // Adjust axises
                 var xScale = d3.event.transform.rescaleX(axisScaleX);
                 var yScale = d3.event.transform.rescaleY(axisScaleY);
+                zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
+                zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
+
                 axises.select('.axis-left').call(axisLeft.scale(yScale));
                 axises.select('.axis-right').call(axisRight.scale(yScale));
                 axises.select('.axis-top').call(axisTop.scale(xScale))
@@ -129,26 +132,37 @@ export default function() {
         });
 
         // Setup axises
+        console.log(canvasWidth);
         var axises = svg.append('g')
             .attr('class', 'hilbert-axises')
             .attr("transform", "translate(" + margin + "," + margin + ")"),
-            nTicks = Math.pow(2, 3),
+            nTicks = Math.pow(2, 3), // Force place ticks on bit boundaries
             nCells = Math.pow(2, order),
             axisScaleX = d3.scaleLinear()
                 .domain([0, nTicks])
                 .range([0, canvasWidth]),
             axisScaleY = axisScaleX.copy(),
-            getTickFormatter = function(xPreset, yPreset) {
+            zoomBox = [[0, 0], [nTicks, nTicks]],
+            getTickFormatter = function(xZoomBoxIdx, yZoomBoxIdx) {
                 return function(d) {
+                    // Convert to canvas coordinates
                     d *= canvasWidth / nTicks;
-                    d = Math.min(d, canvasWidth - 0.001);
-                    return valFormatter(hilbert.getValAtXY(xPreset != null ? xPreset : d, yPreset != null ? yPreset : d));
+
+                    var xy = [
+                        xZoomBoxIdx != null ? axisScaleX(zoomBox[xZoomBoxIdx][0]): d,
+                        yZoomBoxIdx != null ? axisScaleY(zoomBox[yZoomBoxIdx][1]) : d
+                    ].map(function(coord) {
+                        // Prevent going off canvas
+                        return Math.min(coord, canvasWidth * (1 - 1/nCells));
+                    });
+
+                    return valFormatter(hilbert.getValAtXY(xy[0], xy[1]));
                 }
             },
             axisLeft = d3.axisLeft(axisScaleY).tickFormat(getTickFormatter(0)),
-            axisRight = d3.axisRight(axisScaleY).tickFormat(getTickFormatter(canvasWidth * (1 - 1/nCells))),
+            axisRight = d3.axisRight(axisScaleY).tickFormat(getTickFormatter(1)),
             axisTop = d3.axisTop(axisScaleX).tickFormat(getTickFormatter(null, 0)),
-            axisBottom = d3.axisBottom(axisScaleX).tickFormat(getTickFormatter(null, canvasWidth * (1 - 1/nCells)));
+            axisBottom = d3.axisBottom(axisScaleX).tickFormat(getTickFormatter(null, 1));
 
         axises.append("g")
             .attr('class', 'axis-left')
