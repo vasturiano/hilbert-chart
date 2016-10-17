@@ -1,6 +1,6 @@
 {
   "name": "hilbert-chart",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A hilbert space-filling curve D3 chart for representing one-dimensional lengths on a two-dimensional space.",
   "keywords": [
     "hilbert",
