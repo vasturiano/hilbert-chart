@@ -4,6 +4,8 @@ A hilbert space-filling curve D3 chart for representing one-dimensional lengths 
 
 Live example at: http://bl.ocks.org/vasturiano/8aceecba58f115c81853879a691fd94f
 
+[![NPM](https://nodei.co/npm/hilbert-chart.png?compact=true)](https://nodei.co/npm/hilbert-chart/)
+
 ## Quick start
 
 ```
