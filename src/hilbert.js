@@ -262,15 +262,22 @@ export default function() {
                 (d.pathVertices.length + 1) * 0.25, // Max 25% path length
                 canvasWidth / d.cellWidth * 0.03    // Max 3% of canvas size
             ]); })
+            .attr('textLength', function(d) {
+                var MAX_TEXT_EXPANSION;
+                if (d.pathVertices.length) {
+                    // Include it on text element for Firefox support
+                    MAX_TEXT_EXPANSION = 0.4;
+                    return Math.min(d.pathVertices.length, d.name.length * MAX_TEXT_EXPANSION);
+                } else {
+                    MAX_TEXT_EXPANSION = 0.15;
+                    return Math.min(0.95, d.name.length * MAX_TEXT_EXPANSION);
+                }
+            })
             .filter(function(d) { return !d.pathVertices.length; })
                 // Those with no path (plain square)
                 .text(function(d) {
                     var MAX_TEXT_COMPRESSION = 10;
                     return (d.name.length > MAX_TEXT_COMPRESSION) ? '' : d.name;
-                })
-                .attr('textLength', function(d) {
-                    var MAX_TEXT_EXPANSION = 0.15;
-                    return Math.min(0.95, d.name.length * MAX_TEXT_EXPANSION);
                 })
                 .attr('text-anchor', 'middle');
     }
