@@ -215,7 +215,7 @@ export default function() {
             .on('mouseleave', function() { d3.select(this).transition().duration(400).style('opacity', 0.8); });
 
         newPaths.append('text')
-            .attr('dominant-baseline', 'middle')
+            .attr('dy', 0.035)
             .append('textPath')
                 // Label that follows the path contour
                 .attr('xlink:href', function(d) {
