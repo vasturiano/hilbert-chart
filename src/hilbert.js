@@ -233,7 +233,7 @@ export default function() {
                     return '#' + id;
                 })
                 .text(function(d) {
-                    var MAX_TEXT_COMPRESSION = 7;
+                    var MAX_TEXT_COMPRESSION = 8;
                     var name = d.name;
 
                     return (!d.pathVertices.length || d.name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
@@ -282,7 +282,7 @@ export default function() {
             .filter(function(d) { return !d.pathVertices.length; })
                 // Those with no path (plain square)
                 .text(function(d) {
-                    var MAX_TEXT_COMPRESSION = 7;
+                    var MAX_TEXT_COMPRESSION = 10;
                     return (d.name.length > MAX_TEXT_COMPRESSION) ? '' : d.name;
                 })
                 .attr('text-anchor', 'middle');
