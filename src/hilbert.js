@@ -19,7 +19,10 @@ export default function() {
         rangeFormatter = function(d) {
             return valFormatter(d.start) + (d.length > 1 ? ' - ' + valFormatter(d.start + d.length - 1) : '');
         },
-        rangeTooltip;
+        rangeTooltip,
+        rangeColor = function(d) {
+            return segmentColorScale(d.name);
+        };
 
     function chart(nodeElem, ranges, hilbertOrder) {
 
@@ -248,7 +251,7 @@ export default function() {
 
         rangePaths.selectAll('path') //.transition()
             .attr('d', function(d) { return getHilbertPath(d.pathVertices); })
-            .style('stroke', function(d) { return segmentColorScale(d.name); });
+            .style('stroke', rangeColor);
 
         rangePaths
             .attr('transform', function(d) {
@@ -350,6 +353,12 @@ export default function() {
     chart.rangeFormatter = function(_) {
         if (!arguments.length) { return rangeFormatter; }
         rangeFormatter = _;
+        return chart;
+    };
+
+    chart.rangeColor = function(_) {
+        if (!arguments.length) { return rangeColor; }
+        rangeColor = _;
         return chart;
     };
 
