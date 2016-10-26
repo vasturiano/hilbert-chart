@@ -30,7 +30,8 @@
   "dependencies": {
     "d3": "^4.2",
     "d3-hilbert": "^0.2.4",
-    "d3-tip": "^0.7"
+    "d3-tip": "^0.7",
+    "heatmap.js": "^2.0"
   },
   "devDependencies": {
     "package-preamble": "^0.0.2",

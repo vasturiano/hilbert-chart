@@ -3,10 +3,12 @@ import './hilbert.css';
 import * as d3 from 'd3';
 import { hilbert as d3Hilbert } from 'd3-hilbert';
 import d3Tip from 'd3-tip';
+import { default as heatmap } from 'heatmap.js';
 
 export default function() {
 
-    var svg,
+    var elem,
+        svg,
         order,
         hilbert,
 
@@ -26,6 +28,7 @@ export default function() {
 
     function chart(nodeElem, ranges, hilbertOrder) {
 
+        elem = nodeElem;
         order = hilbertOrder;
         hilbert = d3Hilbert()
             .order(order)
@@ -330,6 +333,34 @@ export default function() {
         return chart;
     }
 
+    function addHeatmapPoints(pnts) {
+        var hmData = pnts.map(function(pnt) {
+            var hPnt = { start: pnt, length: 1 };
+            hilbert.layout(hPnt);
+            return {
+                x: Math.round(hPnt.startCell[0] * hPnt.cellWidth),
+                y: Math.round(hPnt.startCell[1] * hPnt.cellWidth),
+                value: 1
+            };
+        });
+
+        var svgBox = svg.node().getBoundingClientRect(),
+            hmElem = d3.select(elem).append('div')
+            .attr('class', 'hilbert-heatmap')
+            .style('top', (svgBox.top + margin) + 'px')
+            .style('left', (svgBox.left + margin) + 'px')
+            .append('div')
+                .style('width', canvasWidth + 'px')
+                .style('height', canvasWidth + 'px');
+
+        heatmap.create({
+            container: hmElem.node()
+        }).setData({
+            max: 100,
+            data: hmData
+        });
+    }
+
     // Getter/setter methods
 
     chart.width = function(_) {
@@ -363,6 +394,8 @@ export default function() {
     };
 
     chart.addMarker = addMarker;
+
+    chart.addHeatmap = addHeatmapPoints;
 
     return chart;
 };

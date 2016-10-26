@@ -9,6 +9,11 @@
     .hilbert-segment text {
         pointer-events: none;
     }
+
+    .hilbert-heatmap {
+        position: absolute;
+        pointer-events: none;
+    }
 }
 
 .hilbert-tooltip {

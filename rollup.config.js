@@ -8,6 +8,7 @@ export default {
     entry: 'src/index.js',
     dest: 'dist/hilbert-chart.js',
     format: 'umd',
+    useStrict: false,   // heatmap.js not strict
     moduleName: 'HilbertChart',
     plugins: [
         commonJs(),
