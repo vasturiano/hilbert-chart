@@ -55,15 +55,15 @@ export default function() {
         var zoomCanvas = svg.append('g')
             .attr('transform', 'translate(' + margin + ',' + margin + ')');
 
-        zoomCanvas.append('rect')
+        var hilbertCanvas = zoomCanvas.append('g')
+            .attr('class', 'hilbert-canvas');
+
+        hilbertCanvas.append('rect')
             .attr('x', 0)
             .attr('y', 0)
             .attr('width', canvasWidth)
             .attr('height', canvasWidth)
-            .attr('fill', 'white');
-
-        var hilbertCanvas = zoomCanvas.append('g')
-            .attr('class', 'hilbert-canvas');
+            .attr('opacity', 0);
 
         hilbertCanvas.append('g').attr('class', 'ranges-canvas');
         hilbertCanvas.append('g').attr('class', 'markers-canvas');
