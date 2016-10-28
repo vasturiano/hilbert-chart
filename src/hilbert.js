@@ -290,7 +290,7 @@ export default function() {
 
     function applyZoom(zoomTransform) {
         // Translate canvas
-        svg.select('.ranges-canvas').attr('transform', zoomTransform);
+        svg.select('.hilbert-canvas').attr('transform', zoomTransform);
 
         // Adjust axises
         var xScale = zoomTransform.rescaleX(axisScaleX);
@@ -321,8 +321,8 @@ export default function() {
         hilbert.layout(tlPoint);
 
         var zoomTransform = d3.zoomTransform(this);
-        zoomTransform.x = tlPoint.startCell[0] * tlPoint.cellWidth;
-        zoomTransform.y = tlPoint.startCell[1] * tlPoint.cellWidth;
+        zoomTransform.x = -tlPoint.startCell[0] * canvasWidth / length;
+        zoomTransform.y = -tlPoint.startCell[1] * canvasWidth / length;
         zoomTransform.k = Math.pow(2, order) / length;
 
         applyZoom(zoomTransform);
