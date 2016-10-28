@@ -24,7 +24,11 @@ export default function() {
         rangeTooltip,
         rangeColor = function(d) {
             return segmentColorScale(d.name);
-        };
+        },
+
+        axisScaleX, axisScaleY,
+        axisLeft, axisRight, axisTop, axisBottom,
+        zoomBox;
 
     function chart(nodeElem, ranges, hilbertOrder) {
 
@@ -72,31 +76,7 @@ export default function() {
         zoomCanvas.call(d3.zoom()
             .translateExtent([[0, 0], [canvasWidth + margin * 2, canvasWidth + margin * 2]])
             .scaleExtent([1, Math.pow(2, order)])
-            .on('zoom', function() {
-                // Translate canvas
-                hilbertCanvas.attr('transform', d3.event.transform);
-
-                // Adjust axises
-                var xScale = d3.event.transform.rescaleX(axisScaleX);
-                var yScale = d3.event.transform.rescaleY(axisScaleY);
-                zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
-                zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
-
-                axises.select('.axis-left').call(axisLeft.scale(yScale));
-                axises.select('.axis-right').call(axisRight.scale(yScale));
-                axises.select('.axis-top').call(axisTop.scale(xScale))
-                    .selectAll('text')
-                        .attr("x", 9)
-                        .attr("dy", ".35em")
-                        .attr("transform", "rotate(-45)")
-                        .style("text-anchor", "start");
-                axises.select('.axis-bottom').call(axisBottom.scale(xScale))
-                    .selectAll('text')
-                        .attr("x", -9)
-                        .attr("dy", ".35em")
-                        .attr("transform", "rotate(-45)")
-                        .style("text-anchor", "end");
-            })
+            .on('zoom', function() { applyZoom(d3.event.transform); })
         );
 
         svg.select('defs').append('clipPath')
@@ -142,32 +122,19 @@ export default function() {
             .attr('class', 'hilbert-axises')
             .attr("transform", "translate(" + margin + "," + margin + ")"),
             nTicks = Math.pow(2, 3), // Force place ticks on bit boundaries
-            nCells = Math.pow(2, order),
-            axisScaleX = d3.scaleLinear()
-                .domain([0, nTicks])
-                .range([0, canvasWidth]),
-            axisScaleY = axisScaleX.copy(),
-            zoomBox = [[0, 0], [nTicks, nTicks]],
-            getTickFormatter = function(xZoomBoxIdx, yZoomBoxIdx) {
-                return function(d) {
-                    // Convert to canvas coordinates
-                    d *= canvasWidth / nTicks;
+            nCells = Math.pow(2, order);
 
-                    var xy = [
-                        xZoomBoxIdx != null ? axisScaleX(zoomBox[xZoomBoxIdx][0]): d,
-                        yZoomBoxIdx != null ? axisScaleY(zoomBox[yZoomBoxIdx][1]) : d
-                    ].map(function(coord) {
-                        // Prevent going off canvas
-                        return Math.min(coord, canvasWidth * (1 - 1/nCells));
-                    });
+        zoomBox = [[0, 0], [nTicks, nTicks]];
 
-                    return valFormatter(hilbert.getValAtXY(xy[0], xy[1]));
-                }
-            },
-            axisLeft = d3.axisLeft(axisScaleY).tickFormat(getTickFormatter(0)),
-            axisRight = d3.axisRight(axisScaleY).tickFormat(getTickFormatter(1)),
-            axisTop = d3.axisTop(axisScaleX).tickFormat(getTickFormatter(null, 0)),
-            axisBottom = d3.axisBottom(axisScaleX).tickFormat(getTickFormatter(null, 1));
+        axisScaleX = d3.scaleLinear()
+            .domain([0, nTicks])
+            .range([0, canvasWidth]);
+        axisScaleY = axisScaleX.copy();
+
+        axisLeft = d3.axisLeft(axisScaleY).tickFormat(getTickFormatter(0));
+        axisRight = d3.axisRight(axisScaleY).tickFormat(getTickFormatter(1));
+        axisTop = d3.axisTop(axisScaleX).tickFormat(getTickFormatter(null, 0));
+        axisBottom = d3.axisBottom(axisScaleX).tickFormat(getTickFormatter(null, 1));
 
         axises.append("g")
             .attr('class', 'axis-left')
@@ -193,6 +160,25 @@ export default function() {
                 .attr("dy", ".35em")
                 .attr("transform", "rotate(-45)")
                 .style("text-anchor", "end");
+
+        //
+
+        function getTickFormatter(xZoomBoxIdx, yZoomBoxIdx) {
+            return function(d) {
+                // Convert to canvas coordinates
+                d *= canvasWidth / nTicks;
+
+                var xy = [
+                    xZoomBoxIdx != null ? axisScaleX(zoomBox[xZoomBoxIdx][0]): d,
+                    yZoomBoxIdx != null ? axisScaleY(zoomBox[yZoomBoxIdx][1]) : d
+                ].map(function(coord) {
+                    // Prevent going off canvas
+                    return Math.min(coord, canvasWidth * (1 - 1/nCells));
+                });
+
+                return valFormatter(hilbert.getValAtXY(xy[0], xy[1]));
+            }
+        }
     }
 
     function d3Digest(ranges) {
@@ -302,6 +288,46 @@ export default function() {
         return path;
     }
 
+    function applyZoom(zoomTransform) {
+        // Translate canvas
+        svg.select('.ranges-canvas').attr('transform', zoomTransform);
+
+        // Adjust axises
+        var xScale = zoomTransform.rescaleX(axisScaleX);
+        var yScale = zoomTransform.rescaleY(axisScaleY);
+        zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
+        zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
+
+        var axises = svg.select('.hilbert-axises');
+
+        axises.select('.axis-left').call(axisLeft.scale(yScale));
+        axises.select('.axis-right').call(axisRight.scale(yScale));
+        axises.select('.axis-top').call(axisTop.scale(xScale))
+            .selectAll('text')
+                .attr("x", 9)
+                .attr("dy", ".35em")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "start");
+        axises.select('.axis-bottom').call(axisBottom.scale(xScale))
+            .selectAll('text')
+                .attr("x", -9)
+                .attr("dy", ".35em")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end");
+    }
+
+    function focusOn(pos, length) {
+        var tlPoint = { start: pos, length: 1 };
+        hilbert.layout(tlPoint);
+
+        var zoomTransform = d3.zoomTransform(this);
+        zoomTransform.x = tlPoint.startCell[0] * tlPoint.cellWidth;
+        zoomTransform.y = tlPoint.startCell[1] * tlPoint.cellWidth;
+        zoomTransform.k = Math.pow(2, order) / length;
+
+        applyZoom(zoomTransform);
+    }
+
     function addMarker(pos, markerUrl, width, height, tooltipFormatter) {
         tooltipFormatter = tooltipFormatter || function(d) {
             return valFormatter(d.start);
@@ -393,8 +419,8 @@ export default function() {
         return chart;
     };
 
+    chart.focusOn = focusOn;
     chart.addMarker = addMarker;
-
     chart.addHeatmap = addHeatmapPoints;
 
     return chart;

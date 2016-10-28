@@ -39,6 +39,8 @@ myChart(<myDOMElement>, <myData>, <hilbertOrder>);
 HilbertChart()
      .width(<px>)
      .margin(<px>)
+     .rangeColor(<colorFunction(d)>)
      .valFormatter(<formatterFunction(val)>)
      .rangeFormatter(<formatterFunction([start, end])>)
+     .focusOn(<pos>, <length>)
 ```
