@@ -42,5 +42,7 @@ HilbertChart()
      .rangeColor(<colorFunction(d)>)
      .valFormatter(<formatterFunction(val)>)
      .rangeFormatter(<formatterFunction([start, end])>)
+     .showValTooltip(<boolean>)
+     .showRangeTooltip(<boolean>)
      .focusOn(<pos>, <length>)
 ```

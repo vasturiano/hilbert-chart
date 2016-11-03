@@ -26,6 +26,9 @@ export default function() {
             return segmentColorScale(d.name);
         },
 
+        showValTooltip = true,
+        showRangeTooltip = true,
+
         axisScaleX, axisScaleY,
         axisLeft, axisRight, axisTop, axisBottom,
         zoomBox;
@@ -96,7 +99,9 @@ export default function() {
             .html(function(d) {
                 return '<b>' + d.name + '</b>: ' + rangeFormatter(d);
             });
-        svg.call(rangeTooltip);
+        if (showRangeTooltip) {
+            svg.call(rangeTooltip);
+        }
 
         // Value Tooltip
         var valTooltip = d3.select('#val-tooltip');
@@ -108,14 +113,20 @@ export default function() {
 
         valTooltip.classed('hilbert-tooltip', true);
 
-        hilbertCanvas.on('mouseover', function() { valTooltip.style("display", "inline"); });
-        hilbertCanvas.on('mouseout', function() { valTooltip.style("display", "none"); });
-        hilbertCanvas.on('mousemove', function () {
-            var coords = d3.mouse(this);
-            valTooltip.text(valFormatter(hilbert.getValAtXY(coords[0], coords[1])))
-                .style('left', d3.event.pageX + 'px')
-                .style('top', d3.event.pageY + 'px');
-        });
+        if (showValTooltip) {
+            hilbertCanvas.on('mouseover', function () {
+                valTooltip.style("display", "inline");
+            });
+            hilbertCanvas.on('mouseout', function () {
+                valTooltip.style("display", "none");
+            });
+            hilbertCanvas.on('mousemove', function () {
+                var coords = d3.mouse(this);
+                valTooltip.text(valFormatter(hilbert.getValAtXY(coords[0], coords[1])))
+                    .style('left', d3.event.pageX + 'px')
+                    .style('top', d3.event.pageY + 'px');
+            });
+        }
 
         // Setup axises
         var axises = svg.append('g')
@@ -416,6 +427,18 @@ export default function() {
     chart.rangeColor = function(_) {
         if (!arguments.length) { return rangeColor; }
         rangeColor = _;
+        return chart;
+    };
+
+    chart.showValTooltip = function(_) {
+        if (!arguments.length) { return showValTooltip; }
+        showValTooltip = !!_;
+        return chart;
+    };
+
+    chart.showRangeTooltip = function(_) {
+        if (!arguments.length) { return showRangeTooltip; }
+        showRangeTooltip = !!_;
         return chart;
     };
 
