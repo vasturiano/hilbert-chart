@@ -28,6 +28,18 @@ myChart(<myDOMElement>, <myData>, <hilbertOrder>);
 
 ## API reference
 
+### Instantiation
+
+`chartObject(domElement, data, hilbertOrder)`
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| <i>domElement</i> | DOM node | The document node to attach the graph to. |
+| <i>data</i> | Array | List of ranges to render. Each range object should follow the minimum syntax of `{start: <int>, end: <int>}`. |
+| <i>hilbertOrder | int | The extent of the hilbert curve range, determined by `4^order`. |
+
+### Object methods 
+
 | Method | Description | Default |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | <b>width</b>([<i>number</i>]) | Getter/setter for the length of each side of the square chart, in px. | (fit to window) |
@@ -37,7 +49,7 @@ myChart(<myDOMElement>, <myData>, <hilbertOrder>);
 | <b>rangeFormatter</b>([<i>function</i>]) | Getter/setter for the range formatting function (`fn(range)`), as text displayed in tooltips. Should return a string. | `start - end` |
 | <b>showValTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a value tooltip on mouse-over. | true |
 | <b>showRangeTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a range tooltip on mouse-over. | true |
-| <b>focusOn</b>(<i>pos</i>, <i>length</i>, <i>animate</i>) | Zoom-in on a particular area of the chart. The zoom area is defined by [`pos`, `pos+length-1`] and may be an approximation if `length` doesn't match a logical bit boundary. `animate` defines whether to animate the transition (`true`) or switch immediately (`false`). | |
+| <b>focusOn</b>(<i>pos</i>, <i>length</i>) | Zoom-in on a particular area of the chart, defined by [`pos`, `pos+length-1`]. May be an approximation if `length` doesn't match a logical bit boundary. ||
 
 ## Local development
 
