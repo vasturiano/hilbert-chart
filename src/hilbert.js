@@ -299,7 +299,9 @@ export default function() {
         return path;
     }
 
-    function applyZoom(zoomTransform) {
+    function applyZoom(zoomTransform, animate) {
+        var svg = animate ? svg.transition().duration(3000) : svg;
+
         // Translate canvas
         svg.select('.hilbert-canvas').attr('transform', zoomTransform);
 
@@ -327,7 +329,7 @@ export default function() {
                 .style("text-anchor", "end");
     }
 
-    function focusOn(pos, length) {
+    function focusOn(pos, length, animate) {
         var tlPoint = { start: pos, length: 1 };
         hilbert.layout(tlPoint);
 
@@ -336,7 +338,9 @@ export default function() {
         zoomTransform.y = -tlPoint.startCell[1] * canvasWidth / length;
         zoomTransform.k = Math.pow(2, order) / length;
 
-        applyZoom(zoomTransform);
+        applyZoom(zoomTransform, animate);
+
+        return chart;
     }
 
     function addMarker(pos, markerUrl, width, height, tooltipFormatter) {
@@ -396,6 +400,8 @@ export default function() {
             max: 100,
             data: hmData
         });
+
+        return chart;
     }
 
     // Getter/setter methods
