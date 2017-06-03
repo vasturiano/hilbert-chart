@@ -9,13 +9,6 @@ Live example at: http://bl.ocks.org/vasturiano/8aceecba58f115c81853879a691fd94f
 ## Quick start
 
 ```
-npm install
-npm run build
-```
-
-## How to instantiate
-
-```
 import { default as HilbertChart } from 'hilbert-chart';
 ```
 or
@@ -35,14 +28,20 @@ myChart(<myDOMElement>, <myData>, <hilbertOrder>);
 
 ## API reference
 
+| Method | Description | Default |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| <b>width</b>([<i>number</i>]) | Getter/setter for the length of each side of the square chart, in px. | (fit to window) |
+| <b>margin</b>([<i>number</i>]) | Getter/setter for the chart margin that contains the axis ticks and labels, in px. | `90` |
+| <b>rangeColor</b>([<i>function</i>]) | Getter/setter for the range object color accessor function (`fn(range)`). | (cycle through d3.schemeCategory20 for unique range.name) |
+| <b>valFormatter</b>([<i>function</i>]) | Getter/setter for the value formatting function (`fn(value)`), as text displayed in axis ticks and tooltips. Should return a string. | `value` |
+| <b>rangeFormatter</b>([<i>function</i>]) | Getter/setter for the range formatting function (`fn(range)`), as text displayed in tooltips. Should return a string. | `start - end` |
+| <b>showValTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a value tooltip on mouse-over. | true |
+| <b>showRangeTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a range tooltip on mouse-over. | true |
+| <b>focusOn</b>(<i>pos</i>, <i>length</i>, <i>animate</i>) | Zoom-in on a particular area of the chart. The zoom area is defined by [`pos`, `pos+length-1`] and may be an approximation if `length` doesn't match a logical bit boundary. `animate` defines whether to animate the transition (`true`) or switch immediately (`false`). | |
+
+## Local development
+
 ```
-HilbertChart()
-     .width(<px>)
-     .margin(<px>)
-     .rangeColor(<colorFunction(d)>)
-     .valFormatter(<formatterFunction(val)>)
-     .rangeFormatter(<formatterFunction([start, end])>)
-     .showValTooltip(<boolean>)
-     .showRangeTooltip(<boolean>)
-     .focusOn(<pos>, <length>)
+npm install
+npm run watch
 ```
