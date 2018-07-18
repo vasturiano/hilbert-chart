@@ -2,6 +2,9 @@
   "name": "hilbert-chart",
   "version": "0.4.4",
   "description": "A hilbert space-filling curve D3 chart for representing one-dimensional lengths on a two-dimensional space.",
+  "unpkg": "dist/hilbert-chart.min.js",
+  "main": "dist/hilbert-chart.common.js",
+  "module": "dist/hilbert-chart.module.js",
   "keywords": [
     "hilbert",
     "space filling",
@@ -14,34 +17,39 @@
     "url": "http://bl.ocks.org/vasturiano"
   },
   "license": "MIT",
-  "main": "dist/hilbert-chart.js",
-  "jsnext:main": "src/index",
   "homepage": "https://github.com/vasturiano/hilbert-chart",
   "repository": {
     "type": "git",
     "url": "https://github.com/vasturiano/hilbert-chart.git"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && rollup -c --banner \"$(preamble)\"",
+    "build": "rimraf dist && rollup -c",
     "watch": "rollup -c -w",
-    "minify": "uglifyjs dist/hilbert-chart.js -o dist/hilbert-chart.min.js -c -m --preamble \"$(preamble)\"",
-    "prepublish": "npm run build && npm run minify"
+    "minify": "uglifyjs dist/hilbert-chart.js -o dist/hilbert-chart.min.js -c -m --comments '/Version/'",
+    "build-module": "rollup -c rollup.config.module.js",
+    "prepublish": "npm run build && npm run minify && npm run build-module"
   },
   "dependencies": {
     "d3": "^4.2",
-    "d3-hilbert": "^0.2.4",
+    "d3-hilbert": "^1.0.0",
     "d3-tip": "^0.7",
     "heatmap.js": "^2.0"
   },
   "devDependencies": {
-    "package-preamble": "^0.0.2",
-    "postcss-nested": "^1.0",
-    "postcss-simple-vars": "^3.0",
-    "rollup": "^0.36",
-    "rollup-plugin-commonjs": "^5.0",
-    "rollup-plugin-node-resolve": "^2.0",
-    "rollup-plugin-postcss": "^0.2",
-    "rollup-watch": "^2.5",
-    "uglify-js": "^2.7"
+    "babel-core": "^6.26.3",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "postcss-nested": "^3.0",
+    "postcss-simple-vars": "^4.1",
+    "rimraf": "^2.6.2",
+    "rollup": "^0.63",
+    "rollup-plugin-babel": "^3.0.7",
+    "rollup-plugin-commonjs": "^9.1",
+    "rollup-plugin-node-resolve": "^3.3",
+    "rollup-plugin-postcss": "^1.6",
+    "rollup-watch": "^4.3",
+    "uglify-js": "^3.4"
   }
 }
