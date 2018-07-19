@@ -9,19 +9,19 @@ Live example at: http://bl.ocks.org/vasturiano/8aceecba58f115c81853879a691fd94f
 ## Quick start
 
 ```
-import { default as HilbertChart } from 'hilbert-chart';
+import HilbertChart from 'hilbert-chart';
 ```
 or
 ```
-var HilbertChart = require('hilbert-chart');
+const HilbertChart = require('hilbert-chart');
 ```
 or even
 ```
-<script src="/path/to/dist/hilbert-chart.js"></script>
+<script src="//unpkg.com/hilbert-chart"></script>
 ```
 then
 ```
-var myChart = HilbertChart();
+const myChart = HilbertChart();
 
 myChart(<myDOMElement>, <myData>, <hilbertOrder>);
 ```
@@ -50,10 +50,3 @@ myChart(<myDOMElement>, <myData>, <hilbertOrder>);
 | <b>showValTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a value tooltip on mouse-over. | true |
 | <b>showRangeTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a range tooltip on mouse-over. | true |
 | <b>focusOn</b>(<i>pos</i>, <i>length</i>) | Zoom-in on a particular area of the chart, defined by [`pos`, `pos+length-1`]. May be an approximation if `length` doesn't match a logical bit boundary. ||
-
-## Local development
-
-```
-npm install
-npm run watch
-```
