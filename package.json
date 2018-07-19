@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "d3": "^4.2",
-    "d3-hilbert": "^1.0.0",
+    "d3-hilbert": "^1.1.0",
     "d3-tip": "^0.7",
     "heatmap.js": "^2.0"
   },
