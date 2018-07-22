@@ -1,6 +1,9 @@
 import './hilbert.css';
 
-import * as d3 from 'd3';
+import { select as d3Select, event as d3Event, mouse as d3Mouse } from 'd3-selection';
+import { scaleLinear as d3ScaleLinear, scaleOrdinal as d3ScaleOrdinal, schemeCategory20 as d3SchemeCategory20 } from 'd3-scale';
+import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop, axisBottom as d3AxisBottom } from 'd3-axis';
+import { zoom as d3Zoom, zoomTransform as d3ZoomTransform } from 'd3-zoom';
 import d3Hilbert from 'd3-hilbert';
 import d3Tip from 'd3-tip';
 import heatmap from 'heatmap.js';
@@ -34,7 +37,7 @@ export default Kapsule({
       const br = [Math.max(...pnts.map(p => p.startCell[0])), Math.max(...pnts.map(p => p.startCell[1]))];
       const side = Math.max(br[0] - tl[0], br[1] - tl[1]);
 
-      const zoomTransform = d3.zoomTransform(this);
+      const zoomTransform = d3ZoomTransform(this);
       zoomTransform.x = -tl[0] * state.canvasWidth / side;
       zoomTransform.y = -tl[1] * state.canvasWidth / side;
       zoomTransform.k = Math.pow(2, state.hilbertOrder) / side;
@@ -83,7 +86,7 @@ export default Kapsule({
       });
 
       const svgBox = state.svg.node().getBoundingClientRect();
-      const hmElem = d3.select(state.nodeElem).append('div')
+      const hmElem = d3Select(state.nodeElem).append('div')
         .attr('class', 'hilbert-heatmap')
         .style('top', (svgBox.top + state.margin) + 'px')
         .style('left', (svgBox.left + state.margin) + 'px')
@@ -142,10 +145,10 @@ export default Kapsule({
   stateInit() {
     return {
       hilbert: d3Hilbert().simplifyCurves(true),
-      defaultColorScale: d3.scaleOrdinal(d3.schemeCategory20),
+      defaultColorScale: d3ScaleOrdinal(d3SchemeCategory20),
       zoomBox: [[0, 0], [N_TICKS, N_TICKS]],
-      axisScaleX: d3.scaleLinear().domain([0, N_TICKS]),
-      axisScaleY: d3.scaleLinear().domain([0, N_TICKS])
+      axisScaleX: d3ScaleLinear().domain([0, N_TICKS]),
+      axisScaleY: d3ScaleLinear().domain([0, N_TICKS])
     };
   },
 
@@ -153,7 +156,7 @@ export default Kapsule({
     // Dom
     state.nodeElem = nodeElem;
 
-    const svg = state.svg = d3.select(nodeElem)
+    const svg = state.svg = d3Select(nodeElem)
       .attr('class', 'hilbert-chart')
       .append('svg');
 
@@ -173,8 +176,8 @@ export default Kapsule({
     hilbertCanvas.append('g').attr('class', 'markers-canvas');
 
     // Zoom interaction
-    zoomCanvas.call(state.zoom = d3.zoom()
-      .on('zoom', () => this._applyZoom(d3.event.transform))
+    zoomCanvas.call(state.zoom = d3Zoom()
+      .on('zoom', () => this._applyZoom(d3Event.transform))
     );
 
     defs.append('clipPath')
@@ -200,10 +203,10 @@ export default Kapsule({
     );
 
     // Value Tooltip
-    let valTooltip = d3.select('#val-tooltip');
+    let valTooltip = d3Select('#val-tooltip');
 
     if (valTooltip.empty()) {
-      valTooltip = d3.select('body').append('div')
+      valTooltip = d3Select('body').append('div')
         .attr('id', 'val-tooltip')
     }
 
@@ -214,17 +217,17 @@ export default Kapsule({
     hilbertCanvas.on('mousemove', function() {
       if (!state.showValTooltip) return;
 
-      const coords = d3.mouse(this);
+      const coords = d3Mouse(this);
       valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(coords[0], coords[1])))
-        .style('left', `${d3.event.pageX}px`)
-        .style('top', `${d3.event.pageY}px`);
+        .style('left', `${d3Event.pageX}px`)
+        .style('top', `${d3Event.pageY}px`);
     });
 
     // Setup axises
-    state.axisLeft = d3.axisLeft().tickFormat(getTickFormatter(0));
-    state.axisRight = d3.axisRight().tickFormat(getTickFormatter(1));
-    state.axisTop = d3.axisTop().tickFormat(getTickFormatter(null, 0));
-    state.axisBottom = d3.axisBottom().tickFormat(getTickFormatter(null, 1));
+    state.axisLeft = d3AxisLeft().tickFormat(getTickFormatter(0));
+    state.axisRight = d3AxisRight().tickFormat(getTickFormatter(1));
+    state.axisTop = d3AxisTop().tickFormat(getTickFormatter(null, 0));
+    state.axisBottom = d3AxisBottom().tickFormat(getTickFormatter(null, 1));
 
     state.axises = state.svg.append('g').attr('class', 'hilbert-axises');
     state.axises.append('g').attr('class', 'axis-left');
@@ -303,8 +306,8 @@ export default Kapsule({
       .on('mouseout', state.rangeTooltip.hide);
 
     newPaths.append('path')
-      .on('mouseenter', function() { d3.select(this).transition().duration(200).style('opacity', 1); })
-      .on('mouseleave', function() { d3.select(this).transition().duration(400).style('opacity', 0.8); });
+      .on('mouseenter', function() { d3Select(this).transition().duration(200).style('opacity', 1); })
+      .on('mouseleave', function() { d3Select(this).transition().duration(400).style('opacity', 0.8); });
 
     newPaths.append('text')
       .attr('dy', 0.035)
@@ -330,7 +333,7 @@ export default Kapsule({
       })
       .attr('startOffset', function(d) {
         if (!d.pathVertices.length) return '0';
-        return ((1 - d3.select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
+        return ((1 - d3Select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
       });
 
     // Ensure propagation of data binding into sub-elements
@@ -348,7 +351,7 @@ export default Kapsule({
       );
 
     rangePaths.selectAll('text')
-      .attr('font-size', d => d3.min([
+      .attr('font-size', d => Math.min(...[
         0.25,                 // Max 25% of path height
         (d.pathVertices.length + 1) * 0.25, // Max 25% path length
         canvasWidth / d.cellWidth * 0.03  // Max 3% of canvas size
