@@ -15,7 +15,7 @@ export default Kapsule({
     margin: { default: 90 },
     hilbertOrder: { default: 4 }, // 0-255 default
     data: { default: [] },
-    rangeLabel: { default: d => d.name },
+    rangeLabel: { default: 'name' },
     rangeColor: {},
     valFormatter: { default: d => d },
     showValTooltip: { default: true, triggerUpdate: false },
