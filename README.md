@@ -23,30 +23,24 @@ then
 ```
 const myChart = HilbertChart();
 
-myChart(<myDOMElement>, <myData>, <hilbertOrder>);
+myChart
+  .hilbertOrder(<hilbertOrder>)
+  .data(<myData>)
+  (<myDOMElement>);
 ```
 
-## API reference
-
-### Instantiation
-
-`chartObject(domElement, data, hilbertOrder)`
-
-| Parameter | Type | Description |
-| --- | --- | --- |
-| <i>domElement</i> | DOM node | The document node to attach the graph to. |
-| <i>data</i> | Array | List of ranges to render. Each range object should follow the minimum syntax of `{start: <int>, end: <int>}`. |
-| <i>hilbertOrder | int | The extent of the hilbert curve range, determined by `4^order`. |
-
-### Object methods 
+## API reference 
 
 | Method | Description | Default |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | <b>width</b>([<i>number</i>]) | Getter/setter for the length of each side of the square chart, in px. | (fit to window) |
 | <b>margin</b>([<i>number</i>]) | Getter/setter for the chart margin that contains the axis ticks and labels, in px. | `90` |
-| <b>rangeColor</b>([<i>function</i>]) | Getter/setter for the range object color accessor function (`fn(range)`). | (cycle through d3.schemeCategory20 for unique range.name) |
-| <b>valFormatter</b>([<i>function</i>]) | Getter/setter for the value formatting function (`fn(value)`), as text displayed in axis ticks and tooltips. Should return a string. | `value` |
-| <b>rangeFormatter</b>([<i>function</i>]) | Getter/setter for the range formatting function (`fn(range)`), as text displayed in tooltips. Should return a string. | `start - end` |
-| <b>showValTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a value tooltip on mouse-over. | true |
-| <b>showRangeTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a range tooltip on mouse-over. | true |
+| <b>hilbertOrder</b>([<i>number</i>]) | Getter/setter for the extent of the hilbert curve range, determined by `4^order`. | `4` |
+| <b>data</b>([<i>array</i>]) | Getter/setter for the list of ranges to render. Each range object should follow the minimum syntax of `{start: <int>, end: <int>}`. | `[]` |
+| <b>rangeLabel</b>([<i>string</i> or <i>fn</i>]) | Getter/setter for the range object label accessor function (`fn(range)`) or attribute. | `name` |
+| <b>rangeColor</b>([<i>fn</i>]) | Getter/setter for the range object color accessor function (`fn(range)`) or attribute. | (cycle through d3.schemeCategory20 for unique labels) |
+| <b>valFormatter</b>([<i>fn</i>]) | Getter/setter for the value formatting function (`fn(value)`), as text displayed in axis ticks and tooltips. Should return a string. | `d => d` |
+| <b>showValTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a value tooltip on mouse-over. | `true` |
+| <b>showRangeTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a range tooltip on mouse-over. | `true` |
+| <b>rangeTooltipContent</b>([<i>string</i> or <i>fn</i>]) | Getter/setter for the range object tooltip content accessor function or attribute. Supports plain text or HTML content. | `<label>: <start> - <end>` |
 | <b>focusOn</b>(<i>pos</i>, <i>length</i>) | Zoom-in on a particular area of the chart, defined by [`pos`, `pos+length-1`]. May be an approximation if `length` doesn't match a logical bit boundary. ||

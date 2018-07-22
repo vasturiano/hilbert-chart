@@ -4,107 +4,203 @@ import * as d3 from 'd3';
 import d3Hilbert from 'd3-hilbert';
 import d3Tip from 'd3-tip';
 import heatmap from 'heatmap.js';
+import Kapsule from 'kapsule';
+import accessorFn from 'accessor-fn';
 
-export default function() {
+const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
 
-  var elem,
-    svg,
-    order,
-    hilbert,
+export default Kapsule({
+  props: {
+    width: {},
+    margin: { default: 90 },
+    hilbertOrder: { default: 4 }, // 0-255 default
+    data: { default: [] },
+    rangeLabel: { default: d => d.name },
+    rangeColor: {},
+    valFormatter: { default: d => d },
+    showValTooltip: { default: true, triggerUpdate: false },
+    showRangeTooltip: { default: true, triggerUpdate: false },
+    rangeTooltipContent: { triggerUpdate: false }
+  },
 
-    margin = 90,
-    canvasWidth = Math.min(window.innerWidth, window.innerHeight - 30) - margin * 2,
-    segmentColorScale = d3.scaleOrdinal(d3.schemeCategory20),
-    valFormatter = function(val) {
-      return val;
+  methods: {
+    focusOn: function(state, pos, length) {
+      const N_SAMPLES = Math.pow(4, 2) + 1; // +1 to sample outside of bit boundaries
+      const pnts = [{ start: pos, length: 1 }, ...[...Array(N_SAMPLES).keys()].map(n => ({ start: pos + Math.round(length * (n + 1)/ N_SAMPLES), length: 1 }))];
+      pnts.forEach(state.hilbert.layout);
+
+      // Figure out bounding box (in side bit units)
+      const tl = [Math.min(...pnts.map(p => p.startCell[0])), Math.min(...pnts.map(p => p.startCell[1]))];
+      const br = [Math.max(...pnts.map(p => p.startCell[0])), Math.max(...pnts.map(p => p.startCell[1]))];
+      const side = Math.max(br[0] - tl[0], br[1] - tl[1]);
+
+      const zoomTransform = d3.zoomTransform(this);
+      zoomTransform.x = -tl[0] * state.canvasWidth / side;
+      zoomTransform.y = -tl[1] * state.canvasWidth / side;
+      zoomTransform.k = Math.pow(2, state.hilbertOrder) / side;
+
+      this._applyZoom(zoomTransform);
+
+      return this;
     },
-    rangeFormatter = function(d) {
-      return valFormatter(d.start) + (d.length > 1 ? ' - ' + valFormatter(d.start + d.length - 1) : '');
+    addMarker(state, pos, markerUrl, width, height, tooltipFormatter) {
+      tooltipFormatter = tooltipFormatter || (d => state.valFormatter(d.start));
+
+      const range = {
+        start: pos,
+        length: 1
+      };
+      state.hilbert.layout(range);
+
+      const marker = state.svg.select('.markers-canvas').append('svg:image')
+        .attr('xlink:href', markerUrl)
+        .attr('width', width)
+        .attr('height', height)
+        .attr('x', range.startCell[0] * range.cellWidth - width/2)
+        .attr('y', range.startCell[1] * range.cellWidth - height/2);
+
+      // Tooltip
+      const markerTooltip = d3Tip()
+        .attr('class', 'hilbert-tooltip')
+        .offset([-15, 0])
+        .html(tooltipFormatter);
+      state.svg.call(markerTooltip);
+
+      marker.on('mouseover', markerTooltip.show);
+      marker.on('mouseout', markerTooltip.hide);
+
+      return this;
     },
-    rangeTooltip,
-    rangeColor = function(d) {
-      return segmentColorScale(d.name);
+    addHeatmap(pnts) {
+      const hmData = pnts.map(pnt => {
+        const hPnt = { start: pnt, length: 1 };
+        state.hilbert.layout(hPnt);
+        return {
+          x: Math.round(hPnt.startCell[0] * hPnt.cellWidth),
+          y: Math.round(hPnt.startCell[1] * hPnt.cellWidth),
+          value: 1
+        };
+      });
+
+      const svgBox = state.svg.node().getBoundingClientRect();
+      const hmElem = d3.select(state.nodeElem).append('div')
+        .attr('class', 'hilbert-heatmap')
+        .style('top', (svgBox.top + state.margin) + 'px')
+        .style('left', (svgBox.left + state.margin) + 'px')
+        .append('div')
+          .style('width', state.canvasWidth + 'px')
+          .style('height', state.canvasWidth + 'px');
+
+      heatmap.create({
+        container: hmElem.node()
+      }).setData({
+        max: 100,
+        data: hmData
+      });
+
+      return this;
     },
+    _refreshAxises(state) {
+      // Adjust axises
+      const axises = state.axises;
 
-    showValTooltip = true,
-    showRangeTooltip = true,
+      state.axisScaleX.range([0, state.canvasWidth]);
+      state.axisScaleY.range([0, state.canvasWidth]);
 
-    axisScaleX, axisScaleY,
-    axisLeft, axisRight, axisTop, axisBottom,
-    zoomBox;
+      axises.select('.axis-left').call(state.axisLeft.scale(state.axisScaleY));
+      axises.select('.axis-right').call(state.axisRight.scale(state.axisScaleY));
+      axises.select('.axis-top').call(state.axisTop.scale(state.axisScaleX))
+        .selectAll('text')
+          .attr('x', 9)
+          .attr('dy', '.35em')
+          .attr('transform', 'rotate(-45)')
+          .style('text-anchor', 'start');
+      axises.select('.axis-bottom').call(state.axisBottom.scale(state.axisScaleX))
+        .selectAll('text')
+          .attr('x', -9)
+          .attr('dy', '.35em')
+          .attr('transform', 'rotate(-45)')
+          .style('text-anchor', 'end');
 
-  function chart(nodeElem, ranges, hilbertOrder) {
+      return this;
+    },
+    _applyZoom(state, zoomTransform) {
+      // Translate canvas
+      state.hilbertCanvas.attr('transform', zoomTransform);
 
-    elem = nodeElem;
-    order = hilbertOrder;
-    hilbert = d3Hilbert()
-      .order(order)
-      .canvasWidth(canvasWidth)
-      .simplifyCurves(true);
+      state.axisScaleX = zoomTransform.rescaleX(state.axisScaleX.domain([0, N_TICKS]));
+      state.axisScaleY = zoomTransform.rescaleY(state.axisScaleY.domain([0, N_TICKS]));
+      state.zoomBox[0] = [state.axisScaleX.domain()[0], state.axisScaleY.domain()[0]];
+      state.zoomBox[1] = [state.axisScaleX.domain()[1], state.axisScaleY.domain()[1]];
 
-    svg = d3.select(nodeElem)
+      this._refreshAxises();
+
+      return this;
+    }
+  },
+
+  stateInit() {
+    return {
+      hilbert: d3Hilbert().simplifyCurves(true),
+      defaultColorScale: d3.scaleOrdinal(d3.schemeCategory20),
+      zoomBox: [[0, 0], [N_TICKS, N_TICKS]],
+      axisScaleX: d3.scaleLinear().domain([0, N_TICKS]),
+      axisScaleY: d3.scaleLinear().domain([0, N_TICKS])
+    };
+  },
+
+  init: function(nodeElem, state) {
+    // Dom
+    state.nodeElem = nodeElem;
+
+    const svg = state.svg = d3.select(nodeElem)
       .attr('class', 'hilbert-chart')
       .append('svg');
 
-    init();
-    d3Digest(ranges);
+    const defs = state.defs = svg.append('defs');
 
-    return chart;
-  }
-
-  function init() {
-    svg
-      .attr("width", canvasWidth + margin * 2)
-      .attr("height", canvasWidth + margin * 2);
-
-    svg.append('defs');
-
-    var zoomCanvas = svg.append('g')
-      .attr('transform', 'translate(' + margin + ',' + margin + ')');
-
-    var hilbertCanvas = zoomCanvas.append('g')
+    const zoomCanvas = state.zoomCanvas = svg.append('g');
+    const hilbertCanvas = state.hilbertCanvas = zoomCanvas.append('g')
       .attr('class', 'hilbert-canvas');
 
     hilbertCanvas.append('rect')
+      .attr('class', 'zoom-trap')
       .attr('x', 0)
       .attr('y', 0)
-      .attr('width', canvasWidth)
-      .attr('height', canvasWidth)
       .attr('opacity', 0);
 
     hilbertCanvas.append('g').attr('class', 'ranges-canvas');
     hilbertCanvas.append('g').attr('class', 'markers-canvas');
 
     // Zoom interaction
-    zoomCanvas.call(d3.zoom()
-      .translateExtent([[0, 0], [canvasWidth + margin * 2, canvasWidth + margin * 2]])
-      .scaleExtent([1, Math.pow(2, order)])
-      .on('zoom', function() { applyZoom(d3.event.transform); })
+    zoomCanvas.call(state.zoom = d3.zoom()
+      .on('zoom', () => this._applyZoom(d3.event.transform))
     );
 
-    svg.select('defs').append('clipPath')
+    defs.append('clipPath')
       .attr('id', 'canvas-cp')
       .append('rect')
         .attr('x', 0)
-        .attr('y', 0)
-        .attr('width', canvasWidth)
-        .attr('height', canvasWidth);
+        .attr('y', 0);
 
-    zoomCanvas.attr("clip-path", "url(#canvas-cp)");
+    zoomCanvas.attr('clip-path', 'url(#canvas-cp)');
 
     // Range Tooltip
-    rangeTooltip = d3Tip()
+    svg.call(state.rangeTooltip = d3Tip()
       .attr('class', 'hilbert-tooltip')
       .offset([-30, 0])
-      .html(function(d) {
-        return '<b>' + d.name + '</b>: ' + rangeFormatter(d);
-      });
-    if (showRangeTooltip) {
-      svg.call(rangeTooltip);
-    }
+      .html(d => {
+        if (state.rangeTooltipContent) { return accessorFn(state.rangeTooltipContent)(d); }
+
+        // default tooltip
+        const rangeLabel = accessorFn(state.rangeLabel);
+        const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
+        return `<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`;
+      })
+    );
 
     // Value Tooltip
-    var valTooltip = d3.select('#val-tooltip');
+    let valTooltip = d3.select('#val-tooltip');
 
     if (valTooltip.empty()) {
       valTooltip = d3.select('body').append('div')
@@ -113,105 +209,98 @@ export default function() {
 
     valTooltip.classed('hilbert-tooltip', true);
 
-    if (showValTooltip) {
-      hilbertCanvas.on('mouseover', function () {
-        valTooltip.style("display", "inline");
-      });
-      hilbertCanvas.on('mouseout', function () {
-        valTooltip.style("display", "none");
-      });
-      hilbertCanvas.on('mousemove', function () {
-        var coords = d3.mouse(this);
-        valTooltip.text(valFormatter(hilbert.getValAtXY(coords[0], coords[1])))
-          .style('left', d3.event.pageX + 'px')
-          .style('top', d3.event.pageY + 'px');
-      });
-    }
+    hilbertCanvas.on('mouseover', () => state.showValTooltip && valTooltip.style('display', 'inline'));
+    hilbertCanvas.on('mouseout', () => valTooltip.style('display', 'none'));
+    hilbertCanvas.on('mousemove', function() {
+      if (!state.showValTooltip) return;
+
+      const coords = d3.mouse(this);
+      valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(coords[0], coords[1])))
+        .style('left', `${d3.event.pageX}px`)
+        .style('top', `${d3.event.pageY}px`);
+    });
 
     // Setup axises
-    var axises = svg.append('g')
-      .attr('class', 'hilbert-axises')
-      .attr("transform", "translate(" + margin + "," + margin + ")"),
-      nTicks = Math.pow(2, 3), // Force place ticks on bit boundaries
-      nCells = Math.pow(2, order);
+    state.axisLeft = d3.axisLeft().tickFormat(getTickFormatter(0));
+    state.axisRight = d3.axisRight().tickFormat(getTickFormatter(1));
+    state.axisTop = d3.axisTop().tickFormat(getTickFormatter(null, 0));
+    state.axisBottom = d3.axisBottom().tickFormat(getTickFormatter(null, 1));
 
-    zoomBox = [[0, 0], [nTicks, nTicks]];
-
-    axisScaleX = d3.scaleLinear()
-      .domain([0, nTicks])
-      .range([0, canvasWidth]);
-    axisScaleY = axisScaleX.copy();
-
-    axisLeft = d3.axisLeft(axisScaleY).tickFormat(getTickFormatter(0));
-    axisRight = d3.axisRight(axisScaleY).tickFormat(getTickFormatter(1));
-    axisTop = d3.axisTop(axisScaleX).tickFormat(getTickFormatter(null, 0));
-    axisBottom = d3.axisBottom(axisScaleX).tickFormat(getTickFormatter(null, 1));
-
-    axises.append("g")
-      .attr('class', 'axis-left')
-      .call(axisLeft);
-    axises.append("g")
-      .attr('class', 'axis-right')
-      .call(axisRight)
-      .attr("transform", "translate(" + canvasWidth + ",0)");
-    axises.append("g")
-      .attr('class', 'axis-top')
-      .call(axisTop)
-      .selectAll("text")
-        .attr("x", 9)
-        .attr("dy", ".35em")
-        .attr("transform", "rotate(-45)")
-        .style("text-anchor", "start");
-    axises.append("g")
-      .attr('class', 'axis-bottom')
-      .call(axisBottom)
-      .attr("transform", "translate(0," + canvasWidth + ")")
-      .selectAll("text")
-        .attr("x", -9)
-        .attr("dy", ".35em")
-        .attr("transform", "rotate(-45)")
-        .style("text-anchor", "end");
+    state.axises = state.svg.append('g').attr('class', 'hilbert-axises');
+    state.axises.append('g').attr('class', 'axis-left');
+    state.axises.append('g').attr('class', 'axis-right');
+    state.axises.append('g').attr('class', 'axis-top');
+    state.axises.append('g').attr('class', 'axis-bottom');
 
     //
 
     function getTickFormatter(xZoomBoxIdx, yZoomBoxIdx) {
-      return function(d) {
+      return d => {
         // Convert to canvas coordinates
-        d *= canvasWidth / nTicks;
+        const relD = d * state.canvasWidth / N_TICKS;
+        const zoomBox = state.zoomBox;
+        const nCells = Math.pow(2, state.hilbertOrder);
 
-        var xy = [
-          xZoomBoxIdx != null ? axisScaleX(zoomBox[xZoomBoxIdx][0]): d,
-          yZoomBoxIdx != null ? axisScaleY(zoomBox[yZoomBoxIdx][1]) : d
-        ].map(function(coord) {
-          // Prevent going off canvas
-          return Math.min(coord, canvasWidth * (1 - 1/nCells));
-        });
+        const xy = [
+          xZoomBoxIdx != null ? state.axisScaleX(zoomBox[xZoomBoxIdx][0]): relD,
+          yZoomBoxIdx != null ? state.axisScaleY(zoomBox[yZoomBoxIdx][1]) : relD
+        ].map(coord =>
+            // Prevent going off canvas
+          Math.min(coord, state.canvasWidth * (1 - 1/nCells))
+        );
 
-        return valFormatter(hilbert.getValAtXY(xy[0], xy[1]));
+        return state.valFormatter(state.hilbert.getValAtXY(xy[0], xy[1]));
       }
     }
-  }
+  },
 
-  function d3Digest(ranges) {
+  update: function(state) {
+    const canvasWidth = state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
+    const labelAcessor = accessorFn(state.rangeLabel);
+    const colorAccessor = state.rangeColor ? accessorFn(state.rangeColor) : (d => state.defaultColorScale(labelAcessor(d)));
 
-    var names = ranges.map(function(range) { return range.name; });
-    names = names.filter(function(name, idx) {
-      return names.indexOf(name) == idx;
-    });
-    segmentColorScale.domain(names);
+    state.hilbert
+      .order(state.hilbertOrder)
+      .canvasWidth(canvasWidth);
 
-    ranges.forEach(hilbert.layout);
+    // resizing
+    state.svg
+      .attr('width', canvasWidth + state.margin * 2)
+      .attr('height', canvasWidth + state.margin * 2);
 
-    var rangePaths = svg.select('.ranges-canvas')
+    state.zoomCanvas.attr('transform', `translate(${state.margin}, ${state.margin})`);
+
+    state.hilbertCanvas.select('.zoom-trap')
+      .attr('width', canvasWidth)
+      .attr('height', canvasWidth);
+
+    state.defs.select('#canvas-cp rect')
+      .attr('width', state.canvasWidth)
+      .attr('height', state.canvasWidth);
+
+    state.zoom
+      .scaleExtent([1, Math.pow(2, state.hilbertOrder)])
+      .translateExtent([[0, 0], [canvasWidth + state.margin * 2, canvasWidth + state.margin * 2]]);
+
+    state.axises.attr('transform', `translate(${state.margin}, ${state.margin})`);
+    state.axises.select('.axis-right').attr('transform', `translate(${canvasWidth},0)`);
+    state.axises.select('.axis-bottom').attr('transform', `translate(0,${canvasWidth})`);
+
+    this._refreshAxises();
+
+    // D3 digest
+    state.data.forEach(state.hilbert.layout);
+
+    let rangePaths = state.svg.select('.ranges-canvas')
       .selectAll('.hilbert-segment')
-      .data(ranges.slice(0));
+      .data(state.data.slice());
 
     rangePaths.exit().remove();
 
-    var newPaths = rangePaths.enter().append('g')
+    const newPaths = rangePaths.enter().append('g')
       .attr('class', 'hilbert-segment')
-      .on('mouseover', rangeTooltip.show)
-      .on('mouseout', rangeTooltip.hide);
+      .on('mouseover', d => state.showRangeTooltip && state.rangeTooltip.show(d))
+      .on('mouseout', state.rangeTooltip.hide);
 
     newPaths.append('path')
       .on('mouseenter', function() { d3.select(this).transition().duration(200).style('opacity', 1); })
@@ -220,29 +309,29 @@ export default function() {
     newPaths.append('text')
       .attr('dy', 0.035)
       .append('textPath')
-        // Label that follows the path contour
-        .attr('xlink:href', function(d) {
-          var id = 'textPath-' + Math.round(Math.random() * 1e10);
-          svg.select('defs').append('path')
-            .attr('id', id)
-            .attr('d', getHilbertPath(d.pathVertices));
+      // Label that follows the path contour
+      .attr('xlink:href', d => {
+        const id = 'textPath-' + Math.round(Math.random() * 1e10);
+        state.defs.append('path')
+          .attr('id', id)
+          .attr('d', getHilbertPath(d.pathVertices));
 
-          return '#' + id;
-        })
-        .text(function(d) {
-          var MAX_TEXT_COMPRESSION = 8;
-          var name = d.name;
+        return '#' + id;
+      })
+      .text(d => {
+        const MAX_TEXT_COMPRESSION = 8;
+        const name = labelAcessor(d);
 
-          return (!d.pathVertices.length || d.name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
-        })
-        .attr('textLength', function(d) {
-          var MAX_TEXT_EXPANSION = 0.4;
-          return Math.min(d.pathVertices.length, d.name.length * MAX_TEXT_EXPANSION);
-        })
-        .attr('startOffset', function(d) {
-          if (!d.pathVertices.length) return '0';
-          return ((1 - d3.select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
-        });
+        return (!d.pathVertices.length || name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
+      })
+      .attr('textLength', d => {
+        const MAX_TEXT_EXPANSION = 0.4;
+        return Math.min(d.pathVertices.length, labelAcessor(d).length * MAX_TEXT_EXPANSION);
+      })
+      .attr('startOffset', function(d) {
+        if (!d.pathVertices.length) return '0';
+        return ((1 - d3.select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
+      });
 
     // Ensure propagation of data binding into sub-elements
     rangePaths.select('path');
@@ -250,205 +339,57 @@ export default function() {
     rangePaths = rangePaths.merge(newPaths);
 
     rangePaths.selectAll('path') //.transition()
-      .attr('d', function(d) { return getHilbertPath(d.pathVertices); })
-      .style('stroke', rangeColor);
+      .attr('d', d => getHilbertPath(d.pathVertices))
+      .style('stroke', colorAccessor);
 
     rangePaths
-      .attr('transform', function(d) {
-        return 'scale('+ d.cellWidth + ') '
-          + 'translate(' + (d.startCell[0] +.5) + ',' + (d.startCell[1] +.5) + ')';
-      });
+      .attr('transform', d =>
+        `scale(${d.cellWidth}) translate(${d.startCell[0] +.5},${d.startCell[1] +.5})`
+      );
 
     rangePaths.selectAll('text')
-      .attr('font-size', function(d) { return d3.min([
+      .attr('font-size', d => d3.min([
         0.25,                 // Max 25% of path height
         (d.pathVertices.length + 1) * 0.25, // Max 25% path length
         canvasWidth / d.cellWidth * 0.03  // Max 3% of canvas size
-      ]); })
-      .attr('textLength', function(d) {
-        var MAX_TEXT_EXPANSION;
+      ]))
+      .attr('textLength', d => {
+        let MAX_TEXT_EXPANSION;
+
+        const name = labelAcessor(d);
         if (d.pathVertices.length) {
           // Include it on text element for Firefox support
           MAX_TEXT_EXPANSION = 0.4;
-          return Math.min(d.pathVertices.length, d.name.length * MAX_TEXT_EXPANSION);
+          return Math.min(d.pathVertices.length, name.length * MAX_TEXT_EXPANSION);
         } else {
           MAX_TEXT_EXPANSION = 0.15;
-          return Math.min(0.95, d.name.length * MAX_TEXT_EXPANSION);
+          return Math.min(0.95, name.length * MAX_TEXT_EXPANSION);
         }
       })
-      .filter(function(d) { return !d.pathVertices.length; })
-        // Those with no path (plain square)
-        .text(function(d) {
-          var MAX_TEXT_COMPRESSION = 10;
-          return (d.name.length > MAX_TEXT_COMPRESSION) ? '' : d.name;
-        })
-        .attr('text-anchor', 'middle');
+      .filter(d => !d.pathVertices.length)
+      // Those with no path (plain square)
+      .text(d => {
+        const MAX_TEXT_COMPRESSION = 10;
+
+        const name = labelAcessor(d);
+        return (name.length > MAX_TEXT_COMPRESSION) ? '' : name;
+      })
+      .attr('text-anchor', 'middle');
+
+    //
+
+    function getHilbertPath(vertices) {
+      let path = 'M0 0L0 0';
+
+      vertices.forEach(function(vert) {
+        switch(vert) {
+          case 'U': path += 'v-1'; break;
+          case 'D': path += 'v1'; break;
+          case 'L': path += 'h-1'; break;
+          case 'R': path += 'h1'; break;
+        }
+      });
+      return path;
+    }
   }
-
-  function getHilbertPath(vertices) {
-    var path = 'M0 0L0 0';
-
-    vertices.forEach(function(vert) {
-      switch(vert) {
-        case 'U': path += 'v-1'; break;
-        case 'D': path += 'v1'; break;
-        case 'L': path += 'h-1'; break;
-        case 'R': path += 'h1'; break;
-      }
-    });
-    return path;
-  }
-
-  function applyZoom(zoomTransform) {
-    // Translate canvas
-    svg.select('.hilbert-canvas').attr('transform', zoomTransform);
-
-    // Adjust axises
-    var xScale = zoomTransform.rescaleX(axisScaleX);
-    var yScale = zoomTransform.rescaleY(axisScaleY);
-    zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
-    zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
-
-    var axises = svg.select('.hilbert-axises');
-
-    axises.select('.axis-left').call(axisLeft.scale(yScale));
-    axises.select('.axis-right').call(axisRight.scale(yScale));
-    axises.select('.axis-top').call(axisTop.scale(xScale))
-      .selectAll('text')
-        .attr("x", 9)
-        .attr("dy", ".35em")
-        .attr("transform", "rotate(-45)")
-        .style("text-anchor", "start");
-    axises.select('.axis-bottom').call(axisBottom.scale(xScale))
-      .selectAll('text')
-        .attr("x", -9)
-        .attr("dy", ".35em")
-        .attr("transform", "rotate(-45)")
-        .style("text-anchor", "end");
-  }
-
-  function focusOn(pos, length) {
-    var tlPoint = { start: pos, length: 1 };
-    hilbert.layout(tlPoint);
-
-    var zoomTransform = d3.zoomTransform(this);
-    zoomTransform.x = -tlPoint.startCell[0] * canvasWidth / length;
-    zoomTransform.y = -tlPoint.startCell[1] * canvasWidth / length;
-    zoomTransform.k = Math.pow(2, order) / length;
-
-    applyZoom(zoomTransform);
-
-    return chart;
-  }
-
-  function addMarker(pos, markerUrl, width, height, tooltipFormatter) {
-    tooltipFormatter = tooltipFormatter || function(d) {
-      return valFormatter(d.start);
-    };
-
-    var range = {
-      start: pos,
-      length: 1
-    };
-    hilbert.layout(range);
-
-    var marker = svg.select('.markers-canvas').append("svg:image")
-      .attr("xlink:href", markerUrl)
-      .attr("width", width)
-      .attr("height", height)
-      .attr("x", range.startCell[0] * range.cellWidth - width/2)
-      .attr("y", range.startCell[1] * range.cellWidth - height/2);
-
-    // Tooltip
-    var markerTooltip = d3Tip()
-      .attr('class', 'hilbert-tooltip')
-      .offset([-15, 0])
-      .html(tooltipFormatter);
-    svg.call(markerTooltip);
-
-    marker.on('mouseover', markerTooltip.show);
-    marker.on('mouseout', markerTooltip.hide);
-
-    return chart;
-  }
-
-  function addHeatmapPoints(pnts) {
-    var hmData = pnts.map(function(pnt) {
-      var hPnt = { start: pnt, length: 1 };
-      hilbert.layout(hPnt);
-      return {
-        x: Math.round(hPnt.startCell[0] * hPnt.cellWidth),
-        y: Math.round(hPnt.startCell[1] * hPnt.cellWidth),
-        value: 1
-      };
-    });
-
-    var svgBox = svg.node().getBoundingClientRect(),
-      hmElem = d3.select(elem).append('div')
-      .attr('class', 'hilbert-heatmap')
-      .style('top', (svgBox.top + margin) + 'px')
-      .style('left', (svgBox.left + margin) + 'px')
-      .append('div')
-        .style('width', canvasWidth + 'px')
-        .style('height', canvasWidth + 'px');
-
-    heatmap.create({
-      container: hmElem.node()
-    }).setData({
-      max: 100,
-      data: hmData
-    });
-
-    return chart;
-  }
-
-  // Getter/setter methods
-
-  chart.width = function(_) {
-    if (!arguments.length) { return canvasWidth; }
-    canvasWidth = _;
-    return chart;
-  };
-
-  chart.margin = function(_) {
-    if (!arguments.length) { return margin; }
-    margin = _;
-    return chart;
-  };
-
-  chart.valFormatter = function(_) {
-    if (!arguments.length) { return valFormatter; }
-    valFormatter = _;
-    return chart;
-  };
-
-  chart.rangeFormatter = function(_) {
-    if (!arguments.length) { return rangeFormatter; }
-    rangeFormatter = _;
-    return chart;
-  };
-
-  chart.rangeColor = function(_) {
-    if (!arguments.length) { return rangeColor; }
-    rangeColor = _;
-    return chart;
-  };
-
-  chart.showValTooltip = function(_) {
-    if (!arguments.length) { return showValTooltip; }
-    showValTooltip = !!_;
-    return chart;
-  };
-
-  chart.showRangeTooltip = function(_) {
-    if (!arguments.length) { return showRangeTooltip; }
-    showRangeTooltip = !!_;
-    return chart;
-  };
-
-  chart.focusOn = focusOn;
-  chart.addMarker = addMarker;
-  chart.addHeatmap = addHeatmapPoints;
-
-  return chart;
-};
+});

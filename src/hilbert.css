@@ -1,34 +1,34 @@
 .hilbert-chart {
-    .hilbert-segment path {
-        fill: none;
-        opacity: 0.8;
-        stroke-width: 0.97;
-        stroke-linecap: square;
-    }
+  .hilbert-segment path {
+    fill: none;
+    opacity: 0.8;
+    stroke-width: 0.97;
+    stroke-linecap: square;
+  }
 
-    .hilbert-segment text {
-        pointer-events: none;
-    }
+  .hilbert-segment text {
+    pointer-events: none;
+  }
 
-    .hilbert-heatmap {
-        position: absolute;
-        pointer-events: none;
-    }
+  .hilbert-heatmap {
+    position: absolute;
+    pointer-events: none;
+  }
 }
 
 .hilbert-tooltip {
-    color: #eee;
-    background: rgba(0,0,140,0.7);
-    padding: 5px;
-    border-radius: 3px;
-    font: 11px sans-serif;
-    text-align: center;
-    pointer-events: none;
+  color: #eee;
+  background: rgba(0,0,140,0.7);
+  padding: 5px;
+  border-radius: 3px;
+  font: 11px sans-serif;
+  text-align: center;
+  pointer-events: none;
 
-    &#val-tooltip {
-        display: none;
-        position: absolute;
-        margin-top: 22px;
-        margin-left: -10px;
-    }
+  &#val-tooltip {
+    display: none;
+    position: absolute;
+    margin-top: 22px;
+    margin-left: -10px;
+  }
 }
