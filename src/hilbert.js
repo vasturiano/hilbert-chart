@@ -189,18 +189,15 @@ export default Kapsule({
     zoomCanvas.attr('clip-path', 'url(#canvas-cp)');
 
     // Range Tooltip
-    svg.call(state.rangeTooltip = d3Tip()
-      .attr('class', 'hilbert-tooltip')
-      .offset([-30, 0])
-      .html(d => {
-        if (state.rangeTooltipContent) { return accessorFn(state.rangeTooltipContent)(d); }
+    let rangeTooltip = d3Select('#range-tooltip');
 
-        // default tooltip
-        const rangeLabel = accessorFn(state.rangeLabel);
-        const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
-        return `<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`;
-      })
-    );
+    if (rangeTooltip.empty()) {
+      rangeTooltip = d3Select('body').append('div')
+        .attr('id', 'range-tooltip')
+    }
+
+    rangeTooltip.classed('hilbert-tooltip', true);
+    state.rangeTooltip = rangeTooltip;
 
     // Value Tooltip
     let valTooltip = d3Select('#val-tooltip');
@@ -215,12 +212,18 @@ export default Kapsule({
     hilbertCanvas.on('mouseover', () => state.showValTooltip && valTooltip.style('display', 'inline'));
     hilbertCanvas.on('mouseout', () => valTooltip.style('display', 'none'));
     hilbertCanvas.on('mousemove', function() {
-      if (!state.showValTooltip) return;
+      if (state.showValTooltip) {
+        const coords = d3Mouse(this);
+        valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(coords[0], coords[1])))
+          .style('left', `${d3Event.pageX}px`)
+          .style('top', `${d3Event.pageY}px`);
+      }
 
-      const coords = d3Mouse(this);
-      valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(coords[0], coords[1])))
-        .style('left', `${d3Event.pageX}px`)
-        .style('top', `${d3Event.pageY}px`);
+      if (state.showRangeTooltip) {
+        rangeTooltip
+          .style('left', `${d3Event.pageX}px`)
+          .style('top', `${d3Event.pageY}px`);
+      }
     });
 
     // Setup axises
@@ -302,12 +305,25 @@ export default Kapsule({
 
     const newPaths = rangePaths.enter().append('g')
       .attr('class', 'hilbert-segment')
-      .on('mouseover', d => state.showRangeTooltip && state.rangeTooltip.show(d))
-      .on('mouseout', state.rangeTooltip.hide);
+      .on('mouseover', d => {
+        state.rangeTooltip.style('display', 'none');
 
-    newPaths.append('path')
-      .on('mouseenter', function() { d3Select(this).transition().duration(200).style('opacity', 1); })
-      .on('mouseleave', function() { d3Select(this).transition().duration(400).style('opacity', 0.8); });
+        if (state.showRangeTooltip) {
+          state.rangeTooltip.style('display', 'inline');
+
+          if (state.rangeTooltipContent) {
+            state.rangeTooltip.html(accessorFn(state.rangeTooltipContent)(d));
+          } else {
+            // default tooltip
+            const rangeLabel = accessorFn(state.rangeLabel);
+            const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
+            state.rangeTooltip.html(`<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`);
+          }
+        }
+      })
+      .on('mouseout', d => state.rangeTooltip.style('display', 'none'));
+
+    newPaths.append('path');
 
     newPaths.append('text')
       .attr('dy', 0.035)

@@ -1,9 +1,15 @@
 .hilbert-chart {
   .hilbert-segment path {
     fill: none;
-    opacity: 0.8;
     stroke-width: 0.97;
     stroke-linecap: square;
+
+    opacity: 1;
+    transition: opacity 0.4s;
+    &:hover {
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
   }
 
   .hilbert-segment text {
@@ -18,7 +24,7 @@
 
 .hilbert-tooltip {
   color: #eee;
-  background: rgba(0,0,140,0.7);
+  background: rgba(0, 0, 0, 0.6);
   padding: 5px;
   border-radius: 3px;
   font: 11px sans-serif;
@@ -28,7 +34,14 @@
   &#val-tooltip {
     display: none;
     position: absolute;
-    margin-top: 22px;
+    margin-top: 20px;
     margin-left: -10px;
+   }
+
+  &#range-tooltip {
+    display: none;
+    position: absolute;
+    margin-top: -44px;
+    transform: translateX(-50%);
   }
 }
