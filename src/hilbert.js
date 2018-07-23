@@ -6,6 +6,7 @@ import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop,
 import { zoom as d3Zoom, zoomTransform as d3ZoomTransform } from 'd3-zoom';
 import d3Hilbert from 'd3-hilbert';
 import d3Tip from 'd3-tip';
+import TweenLite from 'gsap';
 import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
@@ -27,8 +28,8 @@ export default Kapsule({
   },
 
   methods: {
-    focusOn: function(state, pos, length) {
-      setTimeout(() => { // async so that it runs after init
+    focusOn: function(state, pos, length, transitionDuration) {
+      setTimeout(() => { // async so that it runs after initialization
         const N_SAMPLES = Math.pow(4, 2) + 1; // +1 to sample outside of bit boundaries
         const pnts = [{ start: pos, length: 1 }, ...[...Array(N_SAMPLES).keys()].map(n => ({ start: pos + Math.round(length * (n + 1)/ N_SAMPLES), length: 1 }))];
         pnts.forEach(state.hilbert.layout);
@@ -38,12 +39,23 @@ export default Kapsule({
         const br = [Math.max(...pnts.map(p => p.startCell[0])), Math.max(...pnts.map(p => p.startCell[1]))];
         const side = Math.max(br[0] - tl[0], br[1] - tl[1]);
 
-        const zoomTransform = d3ZoomTransform(this);
-        zoomTransform.x = -tl[0] * state.canvasWidth / side;
-        zoomTransform.y = -tl[1] * state.canvasWidth / side;
-        zoomTransform.k = Math.pow(2, state.hilbertOrder) / side;
+        const destination = {
+          x: -tl[0] * state.canvasWidth / side,
+          y: -tl[1] * state.canvasWidth / side,
+          k: Math.pow(2, state.hilbertOrder) / side
+        };
 
-        this._applyZoom(zoomTransform);
+        const zoomTransform = d3ZoomTransform(this);
+
+        if (!transitionDuration) { // no animation
+          this._applyZoom(Object.assign(zoomTransform, destination));
+        } else {
+          TweenLite.to(
+            zoomTransform,
+            transitionDuration / 1000,
+            Object.assign({ onUpdate: () => this._applyZoom(zoomTransform) }, destination)
+          );
+        }
       });
 
       return this;
