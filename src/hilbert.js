@@ -109,18 +109,23 @@ export default Kapsule({
       // Adjust axises
       const axises = state.axises;
 
+      const axisScaleX = state.zoomedAxisScaleX || state.axisScaleX;
+      const axisScaleY = state.zoomedAxisScaleY || state.axisScaleY;
+
+      axisScaleX.range([0, state.canvasWidth]);
+      axisScaleY.range([0, state.canvasWidth]);
       state.axisScaleX.range([0, state.canvasWidth]);
       state.axisScaleY.range([0, state.canvasWidth]);
 
-      axises.select('.axis-left').call(state.axisLeft.scale(state.axisScaleY));
-      axises.select('.axis-right').call(state.axisRight.scale(state.axisScaleY));
-      axises.select('.axis-top').call(state.axisTop.scale(state.axisScaleX))
+      axises.select('.axis-left').call(state.axisLeft.scale(axisScaleY));
+      axises.select('.axis-right').call(state.axisRight.scale(axisScaleY));
+      axises.select('.axis-top').call(state.axisTop.scale(axisScaleX))
         .selectAll('text')
           .attr('x', 9)
           .attr('dy', '.35em')
           .attr('transform', 'rotate(-45)')
           .style('text-anchor', 'start');
-      axises.select('.axis-bottom').call(state.axisBottom.scale(state.axisScaleX))
+      axises.select('.axis-bottom').call(state.axisBottom.scale(axisScaleX))
         .selectAll('text')
           .attr('x', -9)
           .attr('dy', '.35em')
@@ -133,10 +138,11 @@ export default Kapsule({
       // Translate canvas
       state.hilbertCanvas.attr('transform', zoomTransform);
 
-      state.axisScaleX = zoomTransform.rescaleX(state.axisScaleX.domain([0, N_TICKS]));
-      state.axisScaleY = zoomTransform.rescaleY(state.axisScaleY.domain([0, N_TICKS]));
-      state.zoomBox[0] = [state.axisScaleX.domain()[0], state.axisScaleY.domain()[0]];
-      state.zoomBox[1] = [state.axisScaleX.domain()[1], state.axisScaleY.domain()[1]];
+      // Adjust axes
+      const xScale = state.zoomedAxisScaleX = zoomTransform.rescaleX(state.axisScaleX);
+      const yScale = state.zoomedAxisScaleY = zoomTransform.rescaleY(state.axisScaleY);
+      state.zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
+      state.zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
 
       this._refreshAxises();
 
