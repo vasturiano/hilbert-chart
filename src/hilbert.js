@@ -28,21 +28,23 @@ export default Kapsule({
 
   methods: {
     focusOn: function(state, pos, length) {
-      const N_SAMPLES = Math.pow(4, 2) + 1; // +1 to sample outside of bit boundaries
-      const pnts = [{ start: pos, length: 1 }, ...[...Array(N_SAMPLES).keys()].map(n => ({ start: pos + Math.round(length * (n + 1)/ N_SAMPLES), length: 1 }))];
-      pnts.forEach(state.hilbert.layout);
+      setTimeout(() => { // async so that it runs after init
+        const N_SAMPLES = Math.pow(4, 2) + 1; // +1 to sample outside of bit boundaries
+        const pnts = [{ start: pos, length: 1 }, ...[...Array(N_SAMPLES).keys()].map(n => ({ start: pos + Math.round(length * (n + 1)/ N_SAMPLES), length: 1 }))];
+        pnts.forEach(state.hilbert.layout);
 
-      // Figure out bounding box (in side bit units)
-      const tl = [Math.min(...pnts.map(p => p.startCell[0])), Math.min(...pnts.map(p => p.startCell[1]))];
-      const br = [Math.max(...pnts.map(p => p.startCell[0])), Math.max(...pnts.map(p => p.startCell[1]))];
-      const side = Math.max(br[0] - tl[0], br[1] - tl[1]);
+        // Figure out bounding box (in side bit units)
+        const tl = [Math.min(...pnts.map(p => p.startCell[0])), Math.min(...pnts.map(p => p.startCell[1]))];
+        const br = [Math.max(...pnts.map(p => p.startCell[0])), Math.max(...pnts.map(p => p.startCell[1]))];
+        const side = Math.max(br[0] - tl[0], br[1] - tl[1]);
 
-      const zoomTransform = d3ZoomTransform(this);
-      zoomTransform.x = -tl[0] * state.canvasWidth / side;
-      zoomTransform.y = -tl[1] * state.canvasWidth / side;
-      zoomTransform.k = Math.pow(2, state.hilbertOrder) / side;
+        const zoomTransform = d3ZoomTransform(this);
+        zoomTransform.x = -tl[0] * state.canvasWidth / side;
+        zoomTransform.y = -tl[1] * state.canvasWidth / side;
+        zoomTransform.k = Math.pow(2, state.hilbertOrder) / side;
 
-      this._applyZoom(zoomTransform);
+        this._applyZoom(zoomTransform);
+      });
 
       return this;
     },
