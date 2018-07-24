@@ -47,7 +47,7 @@ export default Kapsule({
           k: Math.pow(2, state.hilbertOrder) / side
         };
 
-        const zoomTransform = d3ZoomTransform(this);
+        const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
 
         if (!transitionDuration) { // no animation
           state.zoom.transform(state.zoom.__baseElem, Object.assign(zoomTransform, destination));
