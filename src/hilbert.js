@@ -24,7 +24,9 @@ export default Kapsule({
     valFormatter: { default: d => d },
     showValTooltip: { default: true, triggerUpdate: false },
     showRangeTooltip: { default: true, triggerUpdate: false },
-    rangeTooltipContent: { triggerUpdate: false }
+    rangeTooltipContent: { triggerUpdate: false },
+    onRangeClick: { default: () => {}, triggerUpdate: false },
+    onRangeHover: { default: () => {}, triggerUpdate: false }
   },
 
   methods: {
@@ -325,6 +327,7 @@ export default Kapsule({
 
     const newPaths = rangePaths.enter().append('g')
       .attr('class', 'hilbert-segment')
+      .on('click', state.onRangeClick)
       .on('mouseover', d => {
         state.rangeTooltip.style('display', 'none');
 
@@ -340,8 +343,13 @@ export default Kapsule({
             state.rangeTooltip.html(`<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`);
           }
         }
+
+        state.onRangeHover(d);
       })
-      .on('mouseout', d => state.rangeTooltip.style('display', 'none'));
+      .on('mouseout', d => {
+        state.rangeTooltip.style('display', 'none');
+        state.onRangeHover(null);
+      });
 
     newPaths.append('path');
 
