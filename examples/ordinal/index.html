@@ -1,0 +1,57 @@
+<head>
+  <script src='//unpkg.com/hilbert-chart'></script>
+  <!--<script src='../../dist/hilbert-chart.js'></script>-->
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+    }
+
+    .hilbert-segment path {
+      stroke-width: 1 !important;
+    }
+  </style>
+</head>
+<body>
+  <div id='chart'></div>
+
+  <script>
+    // Gen random data
+    const N_CAT = 14;
+    const MAX_VAL = 100;
+    const data = [...Array(N_CAT)].map((_, i) => ({
+      name: `Series ${i+1}`,
+      val: Math.round(Math.random() * MAX_VAL)
+    }));
+
+    //
+
+    const hilbertOrder = 8;
+    const hilbertLength = Math.pow(4, hilbertOrder);
+
+    const dataSum = data.map(({ val }) => val).reduce((acc, val) => acc + val, 0);
+    const getHilbertVal = val => Math.round(val / dataSum * hilbertLength);
+
+    let carry = 0;
+    const hilbertData = data.map(({ val, ...rest }) => {
+      const d = {
+        start: carry,
+        length: getHilbertVal(val),
+        val,
+        ...rest
+      };
+      carry += d.length;
+      return d;
+    });
+
+    HilbertChart()
+      .margin(40)
+      .hilbertOrder(hilbertOrder)
+      .data(hilbertData)
+      .valFormatter(n => Math.round(n / hilbertLength * dataSum))
+      .showValTooltip(false)
+      .rangeTooltipContent(({ name, val }) => `<b>${name}</b>: ${val} (${Math.round(val / dataSum * 100)}%)`)
+      (document.getElementById('chart'));
+  </script>
+</body>
