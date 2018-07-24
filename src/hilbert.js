@@ -50,12 +50,12 @@ export default Kapsule({
         const zoomTransform = d3ZoomTransform(this);
 
         if (!transitionDuration) { // no animation
-          this._applyZoom(Object.assign(zoomTransform, destination));
+          state.zoom.transform(state.zoom.__baseElem, Object.assign(zoomTransform, destination));
         } else {
           TweenLite.to(
             zoomTransform,
             transitionDuration / 1000,
-            Object.assign({ onUpdate: () => this._applyZoom(zoomTransform) }, destination)
+            Object.assign({ onUpdate: () => state.zoom.transform(state.zoom.__baseElem, zoomTransform) }, destination)
           );
         }
       });
@@ -147,20 +147,6 @@ export default Kapsule({
           .style('text-anchor', 'end');
 
       return this;
-    },
-    _applyZoom(state, zoomTransform) {
-      // Translate canvas
-      state.hilbertCanvas.attr('transform', zoomTransform);
-
-      // Adjust axes
-      const xScale = state.zoomedAxisScaleX = zoomTransform.rescaleX(state.axisScaleX);
-      const yScale = state.zoomedAxisScaleY = zoomTransform.rescaleY(state.axisScaleY);
-      state.zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
-      state.zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
-
-      this._refreshAxises();
-
-      return this;
     }
   },
 
@@ -199,8 +185,22 @@ export default Kapsule({
 
     // Zoom interaction
     zoomCanvas.call(state.zoom = d3Zoom()
-      .on('zoom', () => this._applyZoom(d3Event.transform))
+      .on('zoom', () => {
+        const zoomTransform = d3Event.transform;
+
+        // Translate canvas
+        state.hilbertCanvas.attr('transform', zoomTransform);
+
+        // Adjust axes
+        const xScale = state.zoomedAxisScaleX = zoomTransform.rescaleX(state.axisScaleX);
+        const yScale = state.zoomedAxisScaleY = zoomTransform.rescaleY(state.axisScaleY);
+        state.zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
+        state.zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
+
+        this._refreshAxises();
+      })
     );
+    state.zoom.__baseElem = zoomCanvas; // Attach controlling elem for easy access
 
     defs.append('clipPath')
       .attr('id', 'canvas-cp')
