@@ -55,7 +55,10 @@ export default Kapsule({
           TweenLite.to(
             zoomTransform,
             transitionDuration / 1000,
-            Object.assign({ onUpdate: () => state.zoom.transform(state.zoom.__baseElem, zoomTransform) }, destination)
+            Object.assign({
+              ease: Power1.easeInOut,
+              onUpdate: () => state.zoom.transform(state.zoom.__baseElem, zoomTransform)
+            }, destination)
           );
         }
       });
