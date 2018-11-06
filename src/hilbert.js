@@ -196,7 +196,8 @@ export default Kapsule({
           state.hilbertCanvas.attr('transform', zoomTransform);
           this._refreshAxises();
         } else { // canvas
-          // reapply zoom transform on rerender
+          // reapply zoom transform on rerender (without recalculating layout)
+          state.skipRelayout = true;
           requestAnimationFrame(state._rerender);
         }
       });
@@ -330,7 +331,7 @@ export default Kapsule({
 
     state.zoom
       .scaleExtent([1, Math.pow(2, state.hilbertOrder)])
-      .translateExtent([[0, 0], [canvasWidth + state.margin * 2, canvasWidth + state.margin * 2]]);
+      .translateExtent([[0, 0], [canvasWidth, canvasWidth].map(w => w + (state.useCanvas ? 0 : state.margin * 2))]); // fix margin glitch on svg
 
     state.axises.attr('transform', `translate(${state.margin}, ${state.margin})`);
     state.axises.select('.axis-right').attr('transform', `translate(${canvasWidth},0)`);
@@ -338,8 +339,12 @@ export default Kapsule({
 
     this._refreshAxises();
 
-    // compute layout
-    state.data.forEach(state.hilbert.layout);
+    if (!state.skipRelayout) {
+      // compute layout
+      state.data.forEach(state.hilbert.layout);
+    } else {
+      state.skipRelayout = false;
+    }
 
     state.useCanvas ? canvasUpdate() : svgUpdate();
 
