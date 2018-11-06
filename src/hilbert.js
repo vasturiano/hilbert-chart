@@ -234,6 +234,7 @@ export default Kapsule({
       hilbertCanvas = state.hilbertCanvas = d3El
         .style('position', 'relative')
         .append('canvas')
+          .attr('class', 'hilbert-canvas')
           .style('display', 'block')
           .style('position', 'absolute');
       state.hilbertCanvasCtx = hilbertCanvas.node().getContext('2d');
@@ -268,7 +269,16 @@ export default Kapsule({
     hilbertCanvas.on('mouseout', () => valTooltip.style('display', 'none'));
     hilbertCanvas.on('mousemove', function() {
       if (state.showValTooltip) {
-        const coords = d3Mouse(this);
+        let coords = d3Mouse(this);
+        if (state.useCanvas) {
+          // Need to consider zoom on canvas
+          const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
+          coords[0] -= zoomTransform.x;
+          coords[0] /= zoomTransform.k;
+          coords[1] -= zoomTransform.y;
+          coords[1] /= zoomTransform.k;
+        }
+
         valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(coords[0], coords[1])))
           .style('left', `${d3Event.pageX}px`)
           .style('top', `${d3Event.pageY}px`);
