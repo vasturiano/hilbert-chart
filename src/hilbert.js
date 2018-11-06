@@ -66,6 +66,8 @@ export default Kapsule({
       return this;
     },
     addMarker(state, pos, markerUrl, width, height, tooltipFormatter) {
+      if (state.useCanvas) return this; // not supported in canvas mode
+
       tooltipFormatter = tooltipFormatter || (d => state.valFormatter(d.start));
 
       const range = {
@@ -94,6 +96,8 @@ export default Kapsule({
       return this;
     },
     addHeatmap(pnts) {
+      if (state.useCanvas) return this; // not supported in canvas mode
+
       const hmData = pnts.map(pnt => {
         const hPnt = { start: pnt, length: 1 };
         state.hilbert.layout(hPnt);
@@ -163,36 +167,23 @@ export default Kapsule({
     };
   },
 
-  init: function(nodeElem, state) {
-    // Dom
-    state.nodeElem = nodeElem;
+  init: function(el, state, { useCanvas = false }) {
+    const isD3Selection = !!el && typeof el === 'object' && !!el.node && typeof el.node === 'function';
+    const d3El = d3Select(isD3Selection ? el.node() : el);
+    d3El.html(null); // Wipe DOM
 
-    const svg = state.svg = d3Select(nodeElem)
+    // Dom
+    state.nodeElem = d3El.node();
+    state.useCanvas = useCanvas;
+
+    const svg = state.svg = d3El
       .attr('class', 'hilbert-chart')
       .append('svg');
 
-    const defs = state.defs = svg.append('defs');
-
-    const zoomCanvas = state.zoomCanvas = svg.append('g');
-    const hilbertCanvas = state.hilbertCanvas = zoomCanvas.append('g')
-      .attr('class', 'hilbert-canvas');
-
-    hilbertCanvas.append('rect')
-      .attr('class', 'zoom-trap')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('opacity', 0);
-
-    hilbertCanvas.append('g').attr('class', 'ranges-canvas');
-    hilbertCanvas.append('g').attr('class', 'markers-canvas');
-
-    // Zoom interaction
-    zoomCanvas.call(state.zoom = d3Zoom()
+    // zoom interaction
+    state.zoom = d3Zoom()
       .on('zoom', () => {
         const zoomTransform = d3Event.transform;
-
-        // Translate canvas
-        state.hilbertCanvas.attr('transform', zoomTransform);
 
         // Adjust axes
         const xScale = state.zoomedAxisScaleX = zoomTransform.rescaleX(state.axisScaleX);
@@ -200,18 +191,56 @@ export default Kapsule({
         state.zoomBox[0] = [xScale.domain()[0], yScale.domain()[0]];
         state.zoomBox[1] = [xScale.domain()[1], yScale.domain()[1]];
 
-        this._refreshAxises();
-      })
-    );
-    state.zoom.__baseElem = zoomCanvas; // Attach controlling elem for easy access
+        // Apply transform to chart
+        if (!useCanvas) { // svg
+          state.hilbertCanvas.attr('transform', zoomTransform);
+          this._refreshAxises();
+        } else { // canvas
+          // reapply zoom transform on rerender
+          requestAnimationFrame(state._rerender);
+        }
+      });
 
-    defs.append('clipPath')
-      .attr('id', 'canvas-cp')
-      .append('rect')
+    let hilbertCanvas;
+    if (!useCanvas) { // svg mode
+      const defs = state.defs = svg.append('defs');
+
+      const zoomCanvas = state.zoomCanvas = svg.append('g');
+      hilbertCanvas = state.hilbertCanvas = zoomCanvas.append('g')
+        .attr('class', 'hilbert-canvas');
+
+      hilbertCanvas.append('rect')
+        .attr('class', 'zoom-trap')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('opacity', 0);
+
+      hilbertCanvas.append('g').attr('class', 'ranges-canvas');
+      hilbertCanvas.append('g').attr('class', 'markers-canvas');
+
+      // Zoom binding
+      zoomCanvas.call(state.zoom);
+      state.zoom.__baseElem = zoomCanvas; // Attach controlling elem for easy access
+
+      defs.append('clipPath')
+        .attr('id', 'canvas-cp')
+        .append('rect')
         .attr('x', 0)
         .attr('y', 0);
 
-    zoomCanvas.attr('clip-path', 'url(#canvas-cp)');
+      zoomCanvas.attr('clip-path', 'url(#canvas-cp)');
+    } else { // Canvas mode
+      hilbertCanvas = state.hilbertCanvas = d3El
+        .style('position', 'relative')
+        .append('canvas')
+          .style('display', 'block')
+          .style('position', 'absolute');
+      state.hilbertCanvasCtx = hilbertCanvas.node().getContext('2d');
+
+      // Zoom binding
+      hilbertCanvas.call(state.zoom);
+      state.zoom.__baseElem = hilbertCanvas; // Attach controlling elem for easy access
+    }
 
     // Range Tooltip
     let rangeTooltip = d3Select('#range-tooltip');
@@ -299,16 +328,6 @@ export default Kapsule({
       .attr('width', canvasWidth + state.margin * 2)
       .attr('height', canvasWidth + state.margin * 2);
 
-    state.zoomCanvas.attr('transform', `translate(${state.margin}, ${state.margin})`);
-
-    state.hilbertCanvas.select('.zoom-trap')
-      .attr('width', canvasWidth)
-      .attr('height', canvasWidth);
-
-    state.defs.select('#canvas-cp rect')
-      .attr('width', state.canvasWidth)
-      .attr('height', state.canvasWidth);
-
     state.zoom
       .scaleExtent([1, Math.pow(2, state.hilbertOrder)])
       .translateExtent([[0, 0], [canvasWidth + state.margin * 2, canvasWidth + state.margin * 2]]);
@@ -319,127 +338,205 @@ export default Kapsule({
 
     this._refreshAxises();
 
-    // D3 digest
+    // compute layout
     state.data.forEach(state.hilbert.layout);
 
-    let rangePaths = state.svg.select('.ranges-canvas')
-      .selectAll('.hilbert-segment')
-      .data(state.data.slice());
-
-    rangePaths.exit().remove();
-
-    const newPaths = rangePaths.enter().append('g')
-      .attr('class', 'hilbert-segment')
-      .on('click', state.onRangeClick)
-      .on('mouseover', d => {
-        state.rangeTooltip.style('display', 'none');
-
-        if (state.showRangeTooltip) {
-          state.rangeTooltip.style('display', 'inline');
-
-          if (state.rangeTooltipContent) {
-            state.rangeTooltip.html(accessorFn(state.rangeTooltipContent)(d));
-          } else {
-            // default tooltip
-            const rangeLabel = accessorFn(state.rangeLabel);
-            const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
-            state.rangeTooltip.html(`<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`);
-          }
-        }
-
-        state.onRangeHover(d);
-      })
-      .on('mouseout', d => {
-        state.rangeTooltip.style('display', 'none');
-        state.onRangeHover(null);
-      });
-
-    newPaths.append('path');
-
-    newPaths.append('text')
-      .attr('dy', 0.035)
-      .append('textPath')
-      // Label that follows the path contour
-      .attr('xlink:href', d => {
-        const id = 'textPath-' + Math.round(Math.random() * 1e10);
-        state.defs.append('path')
-          .attr('id', id)
-          .attr('d', getHilbertPath(d.pathVertices));
-
-        return '#' + id;
-      })
-      .text(d => {
-        const MAX_TEXT_COMPRESSION = 8;
-        const name = labelAcessor(d);
-
-        return (!d.pathVertices.length || name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
-      })
-      .attr('textLength', d => {
-        const MAX_TEXT_EXPANSION = 0.4;
-        return Math.min(d.pathVertices.length, labelAcessor(d).length * MAX_TEXT_EXPANSION);
-      })
-      .attr('startOffset', function(d) {
-        if (!d.pathVertices.length) return '0';
-        return ((1 - d3Select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
-      });
-
-    // Ensure propagation of data binding into sub-elements
-    rangePaths.select('path');
-
-    rangePaths = rangePaths.merge(newPaths);
-
-    rangePaths.selectAll('path') //.transition()
-      .attr('d', d => getHilbertPath(d.pathVertices))
-      .style('stroke', colorAccessor);
-
-    rangePaths
-      .attr('transform', d =>
-        `scale(${d.cellWidth}) translate(${d.startCell[0] +.5},${d.startCell[1] +.5})`
-      );
-
-    rangePaths.selectAll('text')
-      .attr('font-size', d => Math.min(...[
-        0.25,                 // Max 25% of path height
-        (d.pathVertices.length + 1) * 0.25, // Max 25% path length
-        canvasWidth / d.cellWidth * 0.03  // Max 3% of canvas size
-      ]))
-      .attr('textLength', d => {
-        let MAX_TEXT_EXPANSION;
-
-        const name = labelAcessor(d);
-        if (d.pathVertices.length) {
-          // Include it on text element for Firefox support
-          MAX_TEXT_EXPANSION = 0.4;
-          return Math.min(d.pathVertices.length, name.length * MAX_TEXT_EXPANSION);
-        } else {
-          MAX_TEXT_EXPANSION = 0.15;
-          return Math.min(0.95, name.length * MAX_TEXT_EXPANSION);
-        }
-      })
-      .filter(d => !d.pathVertices.length)
-      // Those with no path (plain square)
-      .text(d => {
-        const MAX_TEXT_COMPRESSION = 10;
-
-        const name = labelAcessor(d);
-        return (name.length > MAX_TEXT_COMPRESSION) ? '' : name;
-      })
-      .attr('text-anchor', 'middle');
+    state.useCanvas ? canvasUpdate() : svgUpdate();
 
     //
 
-    function getHilbertPath(vertices) {
-      let path = 'M0 0L0 0';
+    function svgUpdate() {
+      // chart resizing
+      state.zoomCanvas.attr('transform', `translate(${state.margin}, ${state.margin})`);
 
-      vertices.forEach(function(vert) {
-        switch(vert) {
-          case 'U': path += 'v-1'; break;
-          case 'D': path += 'v1'; break;
-          case 'L': path += 'h-1'; break;
-          case 'R': path += 'h1'; break;
+      state.hilbertCanvas.select('.zoom-trap')
+        .attr('width', canvasWidth)
+        .attr('height', canvasWidth);
+
+      state.defs.select('#canvas-cp rect')
+        .attr('width', state.canvasWidth)
+        .attr('height', state.canvasWidth);
+
+      // D3 digest
+      let rangePaths = state.svg.select('.ranges-canvas')
+        .selectAll('.hilbert-segment')
+        .data(state.data.slice());
+
+      rangePaths.exit().remove();
+
+      const newPaths = rangePaths.enter().append('g')
+        .attr('class', 'hilbert-segment')
+        .on('click', state.onRangeClick)
+        .on('mouseover', d => {
+          state.rangeTooltip.style('display', 'none');
+
+          if (state.showRangeTooltip) {
+            state.rangeTooltip.style('display', 'inline');
+
+            if (state.rangeTooltipContent) {
+              state.rangeTooltip.html(accessorFn(state.rangeTooltipContent)(d));
+            } else {
+              // default tooltip
+              const rangeLabel = accessorFn(state.rangeLabel);
+              const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
+              state.rangeTooltip.html(`<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`);
+            }
+          }
+
+          state.onRangeHover(d);
+        })
+        .on('mouseout', d => {
+          state.rangeTooltip.style('display', 'none');
+          state.onRangeHover(null);
+        });
+
+      newPaths.append('path');
+
+      newPaths.append('text')
+        .attr('dy', 0.035)
+        .append('textPath')
+        // Label that follows the path contour
+        .attr('xlink:href', d => {
+          const id = 'textPath-' + Math.round(Math.random() * 1e10);
+          state.defs.append('path')
+            .attr('id', id)
+            .attr('d', getHilbertPath(d.pathVertices));
+
+          return '#' + id;
+        })
+        .text(d => {
+          const MAX_TEXT_COMPRESSION = 8;
+          const name = labelAcessor(d);
+
+          return (!d.pathVertices.length || name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
+        })
+        .attr('textLength', d => {
+          const MAX_TEXT_EXPANSION = 0.4;
+          return Math.min(d.pathVertices.length, labelAcessor(d).length * MAX_TEXT_EXPANSION);
+        })
+        .attr('startOffset', function (d) {
+          if (!d.pathVertices.length) return '0';
+          return ((1 - d3Select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
+        });
+
+      // Ensure propagation of data binding into sub-elements
+      rangePaths.select('path');
+
+      rangePaths = rangePaths.merge(newPaths);
+
+      rangePaths.selectAll('path') //.transition()
+        .attr('d', d => getHilbertPath(d.pathVertices))
+        .style('stroke', colorAccessor);
+
+      rangePaths
+        .attr('transform', d =>
+          `scale(${d.cellWidth}) translate(${d.startCell[0] + .5},${d.startCell[1] + .5})`
+      );
+
+      rangePaths.selectAll('text')
+        .attr('font-size', d => Math.min(...[
+          0.25,                 // Max 25% of path height
+          (d.pathVertices.length + 1) * 0.25, // Max 25% path length
+          canvasWidth / d.cellWidth * 0.03  // Max 3% of canvas size
+        ]))
+        .attr('textLength', d => {
+          let MAX_TEXT_EXPANSION;
+
+          const name = labelAcessor(d);
+          if (d.pathVertices.length) {
+            // Include it on text element for Firefox support
+            MAX_TEXT_EXPANSION = 0.4;
+            return Math.min(d.pathVertices.length, name.length * MAX_TEXT_EXPANSION);
+          } else {
+            MAX_TEXT_EXPANSION = 0.15;
+            return Math.min(0.95, name.length * MAX_TEXT_EXPANSION);
+          }
+        })
+        .filter(d => !d.pathVertices.length)
+        // Those with no path (plain square)
+        .text(d => {
+          const MAX_TEXT_COMPRESSION = 10;
+
+          const name = labelAcessor(d);
+          return (name.length > MAX_TEXT_COMPRESSION) ? '' : name;
+        })
+        .attr('text-anchor', 'middle');
+
+      //
+
+      function getHilbertPath(vertices) {
+        let path = 'M0 0L0 0';
+
+        vertices.forEach(function(vert) {
+          switch(vert) {
+            case 'U': path += 'v-1'; break;
+            case 'D': path += 'v1'; break;
+            case 'L': path += 'h-1'; break;
+            case 'R': path += 'h1'; break;
+          }
+        });
+        return path;
+      }
+    }
+
+    function canvasUpdate() {
+      const ctx = state.hilbertCanvasCtx;
+
+      // canvas resize (and clear)
+      state.hilbertCanvas
+        .attr('width', canvasWidth)
+        .attr('height', canvasWidth)
+        .style('top', `${state.margin}px`)
+        .style('left', `${state.margin}px`);
+      ctx.clearRect(0, 0, canvasWidth, canvasWidth);
+
+      // Apply zoom transform
+      const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
+      ctx.translate(zoomTransform.x, zoomTransform.y);
+      ctx.scale(zoomTransform.k, zoomTransform.k);
+
+      state.data.forEach(d => {
+        const color = colorAccessor(d);
+        const w = d.cellWidth;
+
+        if (d.pathVertices.length === 0) { // single cell -> draw a square
+          ctx.fillStyle = color;
+          ctx.fillRect(d.startCell[0] * w, d.startCell[1] * w, w, w);
+
+          const scaledW = w * zoomTransform.k;
+          if (scaledW > 15) { // Hide labels on small square cells
+            const name = labelAcessor(d);
+            const fontSize = Math.min(...[
+                20,             // absolute
+                scaledW * 0.25, // Max 25% of cell height
+                scaledW / name.length * 1.5 // Fit text length
+              ]) / zoomTransform.k;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(name, ...d.startCell.map(c => (c + 0.5) * w));
+          }
+        } else { // draw path (with no labels)
+          ctx.strokeStyle = color;
+          ctx.lineWidth = w;
+          ctx.lineCap = 'square';
+          ctx.beginPath();
+
+          let [x, y] = d.startCell.map(c => c * w + w/2);
+          ctx.moveTo(x, y);
+          d.pathVertices.forEach(vert => {
+            switch(vert) {
+              case 'U': y-=w; break;
+              case 'D': y+=w; break;
+              case 'L': x-=w; break;
+              case 'R': x+=w; break;
+            }
+            ctx.lineTo(x, y);
+          });
+          ctx.stroke();
         }
       });
-      return path;
     }
   }
 });
