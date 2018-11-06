@@ -495,13 +495,25 @@ export default Kapsule({
       ctx.translate(zoomTransform.x, zoomTransform.y);
       ctx.scale(zoomTransform.k, zoomTransform.k);
 
+      const viewWindow = { // in px
+        x: -zoomTransform.x / zoomTransform.k,
+        y: -zoomTransform.y / zoomTransform.k,
+        len: canvasWidth / zoomTransform.k
+      };
+
       state.data.forEach(d => {
         const color = colorAccessor(d);
         const w = d.cellWidth;
 
         if (d.pathVertices.length === 0) { // single cell -> draw a square
+          const [x, y] = d.startCell.map(c => c * w);
+
+          if (x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x || y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y) {
+            return; // cell out of view, no need to draw
+          }
+
           ctx.fillStyle = color;
-          ctx.fillRect(d.startCell[0] * w, d.startCell[1] * w, w, w);
+          ctx.fillRect(x, y, w, w);
 
           const scaledW = w * zoomTransform.k;
           if (scaledW > 15) { // Hide labels on small square cells
@@ -515,7 +527,7 @@ export default Kapsule({
             ctx.fillStyle = 'black';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(name, ...d.startCell.map(c => (c + 0.5) * w));
+            ctx.fillText(name, ...[x, y].map(c => c + w / 2));
           }
         } else { // draw path (with no labels)
           ctx.strokeStyle = color;
