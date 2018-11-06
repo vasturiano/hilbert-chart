@@ -516,28 +516,29 @@ export default Kapsule({
         len: canvasWidth / zoomTransform.k
       };
 
-      state.data.forEach(d => {
-        const color = colorAccessor(d);
+      for (let i = 0, len = state.data.length; i < len ; i++) {
+        const d = state.data[i];
+
         const w = d.cellWidth;
 
         if (d.pathVertices.length === 0) { // single cell -> draw a square
           const [x, y] = d.startCell.map(c => c * w);
 
           if (x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x || y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y) {
-            return; // cell out of view, no need to draw
+            continue; // cell out of view, no need to draw
           }
 
-          ctx.fillStyle = color;
+          ctx.fillStyle = colorAccessor(d);
           ctx.fillRect(x, y, w, w);
 
           const scaledW = w * zoomTransform.k;
           if (scaledW > 15) { // Hide labels on small square cells
             const name = labelAcessor(d);
             const fontSize = Math.min(...[
-                20,             // absolute
-                scaledW * 0.25, // Max 25% of cell height
-                scaledW / name.length * 1.5 // Fit text length
-              ]) / zoomTransform.k;
+              20,             // absolute
+              scaledW * 0.25, // Max 25% of cell height
+              scaledW / name.length * 1.5 // Fit text length
+            ]) / zoomTransform.k;
             ctx.font = `${fontSize}px Sans-Serif`;
             ctx.fillStyle = 'black';
             ctx.textAlign = 'center';
@@ -545,12 +546,12 @@ export default Kapsule({
             ctx.fillText(name, ...[x, y].map(c => c + w / 2));
           }
         } else { // draw path (with no labels)
-          ctx.strokeStyle = color;
+          ctx.strokeStyle = colorAccessor(d);
           ctx.lineWidth = w;
           ctx.lineCap = 'square';
           ctx.beginPath();
 
-          let [x, y] = d.startCell.map(c => c * w + w/2);
+          let [x, y] = d.startCell.map(c => c * w + w / 2);
           ctx.moveTo(x, y);
           d.pathVertices.forEach(vert => {
             switch(vert) {
@@ -563,7 +564,7 @@ export default Kapsule({
           });
           ctx.stroke();
         }
-      });
+      }
     }
   }
 });
