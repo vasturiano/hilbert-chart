@@ -1253,7 +1253,7 @@ d3-timer@1:
   resolved "https://registry.yarnpkg.com/d3-timer/-/d3-timer-1.0.9.tgz#f7bb8c0d597d792ff7131e1c24a36dd471a471ba"
   integrity sha512-rT34J5HnQUHhcLvhSB9GjCkN0Ddd5Y8nCwDBG2u6wQEeYxT/Lf51fTFFkldeib/sE/J0clIe0pnCfs6g/lRbyg==
 
-d3-tip@0.9.1:
+d3-tip@^0.9.1:
   version "0.9.1"
   resolved "https://registry.yarnpkg.com/d3-tip/-/d3-tip-0.9.1.tgz#84e6d331c4e6650d80c5228a07e41820609ab64b"
   integrity sha512-EVBfG9d+HnjIoyVXfhpytWxlF59JaobwizqMX9EBXtsFmJytjwHeYiUs74ldHQjE7S9vzfKTx2LCtvUrIbuFYg==
