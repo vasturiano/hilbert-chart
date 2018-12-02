@@ -7,6 +7,7 @@ import { zoom as d3Zoom, zoomTransform as d3ZoomTransform } from 'd3-zoom';
 import d3Hilbert from 'd3-hilbert';
 import d3Tip from 'd3-tip';
 import TweenLite from 'gsap';
+import './canvas-textpath/ctxtextpath.js';
 import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
@@ -520,6 +521,7 @@ export default Kapsule({
         const d = state.data[i];
 
         const w = d.cellWidth;
+        const scaledW = w * zoomTransform.k;
 
         if (d.pathVertices.length === 0) { // single cell -> draw a square
           const [x, y] = d.startCell.map(c => c * w);
@@ -531,38 +533,57 @@ export default Kapsule({
           ctx.fillStyle = colorAccessor(d);
           ctx.fillRect(x, y, w, w);
 
-          const scaledW = w * zoomTransform.k;
-          if (scaledW > 15) { // Hide labels on small square cells
+          if (scaledW > 12) { // Hide labels on small square cells
             const name = labelAcessor(d);
-            const fontSize = Math.min(...[
+            const fontSize = Math.min(
               20,             // absolute
               scaledW * 0.25, // Max 25% of cell height
               scaledW / name.length * 1.5 // Fit text length
-            ]) / zoomTransform.k;
+            ) / zoomTransform.k;
             ctx.font = `${fontSize}px Sans-Serif`;
             ctx.fillStyle = 'black';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(name, ...[x, y].map(c => c + w / 2));
           }
-        } else { // draw path (with no labels)
-          ctx.strokeStyle = colorAccessor(d);
-          ctx.lineWidth = w;
-          ctx.lineCap = 'square';
-          ctx.beginPath();
-
+        } else { // draw path (with textpath labels)
           let [x, y] = d.startCell.map(c => c * w + w / 2);
-          ctx.moveTo(x, y);
-          d.pathVertices.forEach(vert => {
+          const path = [[x, y], ...d.pathVertices.map(vert => {
             switch(vert) {
               case 'U': y-=w; break;
               case 'D': y+=w; break;
               case 'L': x-=w; break;
               case 'R': x+=w; break;
             }
-            ctx.lineTo(x, y);
-          });
+            return [x, y];
+          })];
+
+          ctx.strokeStyle = colorAccessor(d);
+          ctx.lineWidth = w;
+          ctx.lineCap = 'square';
+          ctx.beginPath();
+          ctx.moveTo(...path[0]);
+          path.slice(1).forEach(([x, y]) => ctx.lineTo(x, y));
           ctx.stroke();
+
+          // extend path extremities to cell edges for textpath
+          const pathStart = path[0].map((c, idx) => c - (path[1][idx] - c) / 2);
+          const pathEnd = path[path.length - 1].map((c, idx) => c - (path[path.length - 2][idx] - c) / 2);
+          path[0] = pathStart;
+          path[path.length - 1] = pathEnd;
+
+          const name = labelAcessor(d);
+          const fontSize = Math.min(
+            20,            // absolute
+            scaledW * 0.4, // Max 40% of cell height
+            scaledW * path.length / name.length * 1.2 // Fit text length
+          ) / zoomTransform.k;
+          ctx.font = `${fontSize}px Sans-Serif`;
+          ctx.fillStyle = 'black';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.lineWidth = 0.01; // no stroke outline
+          ctx.textPath(name, [].concat(...path));
         }
       }
     }
