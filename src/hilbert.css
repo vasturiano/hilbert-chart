@@ -1,7 +1,9 @@
 .hilbert-chart {
+
+  font-family: Sans-serif;
+
   .hilbert-segment path {
     fill: none;
-    stroke-width: 0.97;
     stroke-linecap: square;
 
     opacity: 1;

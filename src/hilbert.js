@@ -22,6 +22,7 @@ export default Kapsule({
     data: { default: [] },
     rangeLabel: { default: 'name' },
     rangeColor: {},
+    rangePadding: { default: 0 },
     valFormatter: { default: d => d },
     showValTooltip: { default: true, triggerUpdate: false },
     showRangeTooltip: { default: true, triggerUpdate: false },
@@ -330,6 +331,8 @@ export default Kapsule({
     const canvasWidth = state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
     const labelAcessor = accessorFn(state.rangeLabel);
     const colorAccessor = state.rangeColor ? accessorFn(state.rangeColor) : (d => state.defaultColorScale(labelAcessor(d)));
+    const _paddingAccessorFn = accessorFn(state.rangePadding);
+    const paddingAccessor = d => Math.max(0, Math.min(1, _paddingAccessorFn(d))); // limit to [0, 1] range
 
     state.hilbert
       .order(state.hilbertOrder)
@@ -411,29 +414,29 @@ export default Kapsule({
       newPaths.append('text')
         .attr('dy', 0.035)
         .append('textPath')
-        // Label that follows the path contour
-        .attr('xlink:href', d => {
-          const id = 'textPath-' + Math.round(Math.random() * 1e10);
-          state.defs.append('path')
-            .attr('id', id)
-            .attr('d', getHilbertPath(d.pathVertices));
+          // Label that follows the path contour
+          .attr('xlink:href', d => {
+            const id = 'textPath-' + Math.round(Math.random() * 1e10);
+            state.defs.append('path')
+              .attr('id', id)
+              .attr('d', getHilbertPath(d.pathVertices));
 
-          return '#' + id;
-        })
-        .text(d => {
-          const MAX_TEXT_COMPRESSION = 8;
-          const name = labelAcessor(d);
+            return '#' + id;
+          })
+          .text(d => {
+            const MAX_TEXT_COMPRESSION = 8;
+            const name = labelAcessor(d);
 
-          return (!d.pathVertices.length || name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
-        })
-        .attr('textLength', d => {
-          const MAX_TEXT_EXPANSION = 0.4;
-          return Math.min(d.pathVertices.length, labelAcessor(d).length * MAX_TEXT_EXPANSION);
-        })
-        .attr('startOffset', function (d) {
-          if (!d.pathVertices.length) return '0';
-          return ((1 - d3Select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
-        });
+            return (!d.pathVertices.length || name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
+          })
+          .attr('textLength', d => {
+            const MAX_TEXT_EXPANSION = 0.4;
+            return Math.min(d.pathVertices.length, labelAcessor(d).length * MAX_TEXT_EXPANSION);
+          })
+          .attr('startOffset', function (d) {
+            if (!d.pathVertices.length) return '0';
+            return ((1 - d3Select(this).attr('textLength') / d.pathVertices.length) / 2 * 100) + '%'
+          });
 
       // Ensure propagation of data binding into sub-elements
       rangePaths.select('path');
@@ -442,7 +445,8 @@ export default Kapsule({
 
       rangePaths.selectAll('path') //.transition()
         .attr('d', d => getHilbertPath(d.pathVertices))
-        .style('stroke', colorAccessor);
+        .style('stroke', colorAccessor)
+        .style('stroke-width', d => 1 - paddingAccessor(d));
 
       rangePaths
         .attr('transform', d =>
@@ -452,7 +456,7 @@ export default Kapsule({
       rangePaths.selectAll('text')
         .attr('font-size', d => Math.min(...[
           0.25,                 // Max 25% of path height
-          (d.pathVertices.length + 1) * 0.25, // Max 25% path length
+          (d.pathVertices.length + 1 - paddingAccessor(d)) * 0.25, // Max 25% path length
           canvasWidth / d.cellWidth * 0.03  // Max 3% of canvas size
         ]))
         .attr('textLength', d => {
@@ -465,7 +469,7 @@ export default Kapsule({
             return Math.min(d.pathVertices.length, name.length * MAX_TEXT_EXPANSION);
           } else {
             MAX_TEXT_EXPANSION = 0.15;
-            return Math.min(0.95, name.length * MAX_TEXT_EXPANSION);
+            return Math.min(0.95 * (1 - paddingAccessor(d)), name.length * MAX_TEXT_EXPANSION);
           }
         })
         .filter(d => !d.pathVertices.length)
@@ -522,6 +526,7 @@ export default Kapsule({
 
         const w = d.cellWidth;
         const scaledW = w * zoomTransform.k;
+        const relPadding = paddingAccessor(d);
 
         if (d.pathVertices.length === 0) { // single cell -> draw a square
           const [x, y] = d.startCell.map(c => c * w);
@@ -530,15 +535,18 @@ export default Kapsule({
             continue; // cell out of view, no need to draw
           }
 
+          const rectPadding = relPadding * w / 2;
+          const rectW = w * (1 - relPadding);
+
           ctx.fillStyle = colorAccessor(d);
-          ctx.fillRect(x, y, w, w);
+          ctx.fillRect(x + rectPadding, y + rectPadding, rectW, rectW);
 
           if (scaledW > 12) { // Hide labels on small square cells
             const name = labelAcessor(d);
             const fontSize = Math.min(
               20,             // absolute
               scaledW * 0.25, // Max 25% of cell height
-              scaledW / name.length * 1.5 // Fit text length
+              scaledW * (1 - relPadding) / name.length * 1.5 // Fit text length
             ) / zoomTransform.k;
             ctx.font = `${fontSize}px Sans-Serif`;
             ctx.fillStyle = 'black';
@@ -559,7 +567,7 @@ export default Kapsule({
           })];
 
           ctx.strokeStyle = colorAccessor(d);
-          ctx.lineWidth = w;
+          ctx.lineWidth = w * (1 - relPadding);
           ctx.lineCap = 'square';
           ctx.beginPath();
           ctx.moveTo(...path[0]);
@@ -576,7 +584,7 @@ export default Kapsule({
           const fontSize = Math.min(
             20,            // absolute
             scaledW * 0.4, // Max 40% of cell height
-            scaledW * path.length / name.length * 1.2 // Fit text length
+            scaledW * (path.length - relPadding) / name.length * 1.2 // Fit text length
           ) / zoomTransform.k;
           ctx.font = `${fontSize}px Sans-Serif`;
           ctx.fillStyle = 'black';
