@@ -180,7 +180,8 @@ export default Kapsule({
 
     const svg = state.svg = d3El
       .attr('class', 'hilbert-chart')
-      .append('svg');
+      .append('svg')
+        .style('display', 'block');
 
     // zoom interaction
     state.zoom = d3Zoom()
