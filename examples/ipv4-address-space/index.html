@@ -29,6 +29,7 @@
       HilbertChart()
         .hilbertOrder(32 / 2)
         .data(parseIpData(data))
+        .rangePadding(0.03)
         .valFormatter(ipFormatter)
         .rangeTooltipContent(d => `<b>${d.name}</b>: ${prefixFormatter(d)}`)
         (document.getElementById('ipv4-chart'));
