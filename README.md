@@ -1,10 +1,13 @@
-# Hilbert Chart
+Hilbert Chart
+==============
+
+[![NPM package][npm-img]][npm-url]
+[![Build Size][build-size-img]][build-size-url]
+[![Dependencies][dependencies-img]][dependencies-url]
 
 A hilbert space-filling curve D3 chart for representing one-dimensional lengths on a two-dimensional space.
 
 Live example at: http://bl.ocks.org/vasturiano/8aceecba58f115c81853879a691fd94f
-
-[![NPM](https://nodei.co/npm/hilbert-chart.png?compact=true)](https://nodei.co/npm/hilbert-chart/)
 
 ## Quick start
 
@@ -58,3 +61,12 @@ HilbertChart({ configOptions })(<domElement>)
 | <b>rangeTooltipContent</b>([<i>string</i> or <i>fn</i>]) | Getter/setter for the range object tooltip content accessor function or attribute. Supports plain text or HTML content. | `<label>: <start> - <end>` |
 | <b>onRangeClick</b>(<i>fn</i>) | Callback function for range clicks. The range object is included as single argument `onRangeClick(range)`. | - |
 | <b>onRangeHover</b>(<i>fn</i>) | Callback function for range mouse over events. The range object (or `null` if hovering out) is included as single argument `onRangeHover(range)`. | - |
+
+
+[npm-img]: https://img.shields.io/npm/v/hilbert-chart.svg
+[npm-url]: https://npmjs.org/package/hilbert-chart
+[build-size-img]: https://img.shields.io/bundlephobia/minzip/hilbert-chart.svg
+[build-size-url]: https://bundlephobia.com/result?p=hilbert-chart
+[dependencies-img]: https://img.shields.io/david/vasturiano/hilbert-chart.svg
+[dependencies-url]: https://david-dm.org/vasturiano/hilbert-chart
+
