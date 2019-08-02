@@ -500,20 +500,24 @@ export default Kapsule({
     }
 
     function canvasUpdate() {
+      const pxScale = window.devicePixelRatio; // 2 on retina displays
       const ctx = state.hilbertCanvasCtx;
 
       // canvas resize (and clear)
       state.hilbertCanvas
-        .attr('width', canvasWidth)
-        .attr('height', canvasWidth)
         .style('top', `${state.margin}px`)
-        .style('left', `${state.margin}px`);
+        .style('left', `${state.margin}px`)
+        .style('width', `${canvasWidth}px`)
+        .style('height', `${canvasWidth}px`)
+        .attr('width', state.canvasWidth * pxScale)
+        .attr('height', state.canvasWidth * pxScale);
+
       ctx.clearRect(0, 0, canvasWidth, canvasWidth);
 
-      // Apply zoom transform
+      // Apply zoom transform (respecting pxScale)
       const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
-      ctx.translate(zoomTransform.x, zoomTransform.y);
-      ctx.scale(zoomTransform.k, zoomTransform.k);
+      ctx.translate(zoomTransform.x * pxScale, zoomTransform.y * pxScale);
+      ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
 
       const viewWindow = { // in px
         x: -zoomTransform.x / zoomTransform.k,
