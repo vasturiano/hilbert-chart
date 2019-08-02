@@ -1,7 +1,6 @@
-import './hilbert.css';
-
 import { select as d3Select, event as d3Event, mouse as d3Mouse } from 'd3-selection';
-import { scaleLinear as d3ScaleLinear, scaleOrdinal as d3ScaleOrdinal, schemeCategory20 as d3SchemeCategory20 } from 'd3-scale';
+import { scaleLinear as d3ScaleLinear, scaleOrdinal as d3ScaleOrdinal } from 'd3-scale';
+import { schemePaired as d3SchemePaired } from 'd3-scale-chromatic';
 import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop, axisBottom as d3AxisBottom } from 'd3-axis';
 import { zoom as d3Zoom, zoomTransform as d3ZoomTransform } from 'd3-zoom';
 import d3Hilbert from 'd3-hilbert';
@@ -162,7 +161,7 @@ export default Kapsule({
   stateInit() {
     return {
       hilbert: d3Hilbert().simplifyCurves(true),
-      defaultColorScale: d3ScaleOrdinal(d3SchemeCategory20),
+      defaultColorScale: d3ScaleOrdinal(d3SchemePaired),
       zoomBox: [[0, 0], [N_TICKS, N_TICKS]],
       axisScaleX: d3ScaleLinear().domain([0, N_TICKS]),
       axisScaleY: d3ScaleLinear().domain([0, N_TICKS])
