@@ -5,7 +5,7 @@ import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop,
 import { zoom as d3Zoom, zoomTransform as d3ZoomTransform } from 'd3-zoom';
 import d3Hilbert from 'd3-hilbert';
 import d3Tip from 'd3-tip';
-import TweenLite from 'gsap';
+import gsap from 'gsap';
 import './canvas-textpath/ctxtextpath.js';
 import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
@@ -53,11 +53,11 @@ export default Kapsule({
         if (!transitionDuration) { // no animation
           state.zoom.transform(state.zoom.__baseElem, Object.assign(zoomTransform, destination));
         } else {
-          TweenLite.to(
+          gsap.to(
             zoomTransform,
-            transitionDuration / 1000,
             Object.assign({
-              ease: Power1.easeInOut,
+              duration: transitionDuration / 1000,
+              ease: 'power1.inOut',
               onUpdate: () => state.zoom.transform(state.zoom.__baseElem, zoomTransform)
             }, destination)
           );
