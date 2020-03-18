@@ -18,7 +18,7 @@ export interface HilbertChartGenericInstance<ChainableInstance> {
   width(): number;
   width(width: number): ChainableInstance;
   margin(): number;
-  margin(height: number): ChainableInstance;
+  margin(px: number): ChainableInstance;
 
   hilbertOrder(): number;
   hilbertOrder(height: number): ChainableInstance;
@@ -28,7 +28,7 @@ export interface HilbertChartGenericInstance<ChainableInstance> {
   rangeLabel(): RangeAccessor<string>;
   rangeLabel(textAccessor: RangeAccessor<string>): ChainableInstance;
   rangeColor(): RangeAccessor<string>;
-  rangeColor(textAccessor: RangeAccessor<string>): ChainableInstance;
+  rangeColor(colorAccessor: RangeAccessor<string>): ChainableInstance;
   rangePadding(): RangeAccessor<string>;
   rangePadding(paddingAccessor: RangeAccessor<string>): ChainableInstance;
   valFormatter(): NumFormatter;
