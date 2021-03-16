@@ -3,7 +3,7 @@ import commonJs from '@rollup/plugin-commonjs';
 import postCss from 'rollup-plugin-postcss';
 import postCssSimpleVars from 'postcss-simple-vars';
 import postCssNested from 'postcss-nested';
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
 import { terser } from "rollup-plugin-terser";
 import dts from 'rollup-plugin-dts';
 import { name, homepage, version, dependencies, peerDependencies } from './package.json';
@@ -50,7 +50,8 @@ export default [
       {
         format: 'cjs',
         strict: false,
-        file: `dist/${name}.common.js`
+        file: `dist/${name}.common.js`,
+        exports: 'auto'
       },
       {
         format: 'es',

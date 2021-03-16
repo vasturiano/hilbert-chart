@@ -1,4 +1,4 @@
-import { select as d3Select, event as d3Event, mouse as d3Mouse } from 'd3-selection';
+import { select as d3Select, pointer as d3Pointer } from 'd3-selection';
 import { scaleLinear as d3ScaleLinear, scaleOrdinal as d3ScaleOrdinal } from 'd3-scale';
 import { schemePaired as d3SchemePaired } from 'd3-scale-chromatic';
 import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop, axisBottom as d3AxisBottom } from 'd3-axis';
@@ -91,8 +91,8 @@ export default Kapsule({
         .html(tooltipFormatter);
       state.svg.call(markerTooltip);
 
-      marker.on('mouseover', markerTooltip.show);
-      marker.on('mouseout', markerTooltip.hide);
+      marker.on('mouseover', (ev, d) => markerTooltip.show(d));
+      marker.on('mouseout', (ev, d) => markerTooltip.hide(d));
 
       return this;
     },
@@ -184,8 +184,8 @@ export default Kapsule({
 
     // zoom interaction
     state.zoom = d3Zoom()
-      .on('zoom', () => {
-        const zoomTransform = d3Event.transform;
+      .on('zoom', ev => {
+        const zoomTransform = ev.transform;
 
         // Adjust axes
         const xScale = state.zoomedAxisScaleX = zoomTransform.rescaleX(state.axisScaleX);
@@ -269,9 +269,9 @@ export default Kapsule({
 
     hilbertCanvas.on('mouseover', () => state.showValTooltip && valTooltip.style('display', 'inline'));
     hilbertCanvas.on('mouseout', () => valTooltip.style('display', 'none'));
-    hilbertCanvas.on('mousemove', function() {
+    hilbertCanvas.on('mousemove', function(ev) {
       if (state.showValTooltip) {
-        let coords = d3Mouse(this);
+        let coords = d3Pointer(ev);
         if (state.useCanvas) {
           // Need to consider zoom on canvas
           const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
@@ -282,14 +282,14 @@ export default Kapsule({
         }
 
         valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(coords[0], coords[1])))
-          .style('left', `${d3Event.pageX}px`)
-          .style('top', `${d3Event.pageY}px`);
+          .style('left', `${ev.pageX}px`)
+          .style('top', `${ev.pageY}px`);
       }
 
       if (state.showRangeTooltip) {
         rangeTooltip
-          .style('left', `${d3Event.pageX}px`)
-          .style('top', `${d3Event.pageY}px`);
+          .style('left', `${ev.pageX}px`)
+          .style('top', `${ev.pageY}px`);
       }
     });
 
@@ -385,8 +385,8 @@ export default Kapsule({
 
       const newPaths = rangePaths.enter().append('g')
         .attr('class', 'hilbert-segment')
-        .on('click', state.onRangeClick)
-        .on('mouseover', d => {
+        .on('click', (ev, d) => state.onRangeClick(d))
+        .on('mouseover', (ev, d) => {
           state.rangeTooltip.style('display', 'none');
 
           if (state.showRangeTooltip) {
@@ -404,7 +404,7 @@ export default Kapsule({
 
           state.onRangeHover(d);
         })
-        .on('mouseout', d => {
+        .on('mouseout', () => {
           state.rangeTooltip.style('display', 'none');
           state.onRangeHover(null);
         });
