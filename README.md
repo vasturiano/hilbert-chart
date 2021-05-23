@@ -7,7 +7,7 @@ Hilbert Chart
 
 A hilbert space-filling curve D3 chart for representing one-dimensional lengths on a two-dimensional space.
 
-Live example at: http://bl.ocks.org/vasturiano/8aceecba58f115c81853879a691fd94f
+Live example at: https://observablehq.com/@vasturiano/hilbert-map-of-ipv4-address-space
 
 ## Quick start
 
