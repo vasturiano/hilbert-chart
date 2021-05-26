@@ -26,8 +26,8 @@ export default Kapsule({
     showValTooltip: { default: true, triggerUpdate: false },
     showRangeTooltip: { default: true, triggerUpdate: false },
     rangeTooltipContent: { triggerUpdate: false },
-    onRangeClick: { default: () => {}, triggerUpdate: false },
-    onRangeHover: { default: () => {}, triggerUpdate: false }
+    onRangeClick: { triggerUpdate: false },
+    onRangeHover: { triggerUpdate: false }
   },
 
   methods: {
@@ -385,7 +385,7 @@ export default Kapsule({
 
       const newPaths = rangePaths.enter().append('g')
         .attr('class', 'hilbert-segment')
-        .on('click', (ev, d) => state.onRangeClick(d))
+        .on('click', (ev, d) => state.onRangeClick && state.onRangeClick(d))
         .on('mouseover', (ev, d) => {
           state.rangeTooltip.style('display', 'none');
 
@@ -402,11 +402,11 @@ export default Kapsule({
             }
           }
 
-          state.onRangeHover(d);
+          state.onRangeHover && state.onRangeHover(d);
         })
         .on('mouseout', () => {
           state.rangeTooltip.style('display', 'none');
-          state.onRangeHover(null);
+          state.onRangeHover && state.onRangeHover(null);
         });
 
       newPaths.append('path');
@@ -446,7 +446,8 @@ export default Kapsule({
       rangePaths.selectAll('path') //.transition()
         .attr('d', d => getHilbertPath(d.pathVertices))
         .style('stroke', colorAccessor)
-        .style('stroke-width', d => 1 - paddingAccessor(d));
+        .style('stroke-width', d => 1 - paddingAccessor(d))
+        .style('cursor', state.onRangeClick ? 'pointer' : null);
 
       rangePaths
         .attr('transform', d =>
