@@ -3,7 +3,7 @@ Hilbert Chart
 
 [![NPM package][npm-img]][npm-url]
 [![Build Size][build-size-img]][build-size-url]
-[![Dependencies][dependencies-img]][dependencies-url]
+[![NPM Downloads][npm-downloads-img]][npm-downloads-url]
 
 A hilbert space-filling curve chart for representing one-dimensional lengths on a two-dimensional space.
 
@@ -11,19 +11,19 @@ Live example at: https://observablehq.com/@vasturiano/hilbert-map-of-ipv4-addres
 
 ## Quick start
 
-```
+```js
 import HilbertChart from 'hilbert-chart';
 ```
 or
-```
+```js
 const HilbertChart = require('hilbert-chart');
 ```
 or even
-```
+```html
 <script src="//unpkg.com/hilbert-chart"></script>
 ```
 then
-```
+```js
 const myChart = HilbertChart();
 
 myChart
@@ -35,7 +35,7 @@ myChart
 ## API reference
 
 ### Initialisation
-```
+```js
 HilbertChart({ configOptions })(<domElement>)
 ```
 
@@ -63,10 +63,10 @@ HilbertChart({ configOptions })(<domElement>)
 | <b>onRangeHover</b>(<i>fn</i>) | Callback function for range mouse over events. The range object (or `null` if hovering out) is included as single argument `onRangeHover(range)`. | - |
 
 
-[npm-img]: https://img.shields.io/npm/v/hilbert-chart.svg
+[npm-img]: https://img.shields.io/npm/v/hilbert-chart
 [npm-url]: https://npmjs.org/package/hilbert-chart
-[build-size-img]: https://img.shields.io/bundlephobia/minzip/hilbert-chart.svg
+[build-size-img]: https://img.shields.io/bundlephobia/minzip/hilbert-chart
 [build-size-url]: https://bundlephobia.com/result?p=hilbert-chart
-[dependencies-img]: https://img.shields.io/david/vasturiano/hilbert-chart.svg
-[dependencies-url]: https://david-dm.org/vasturiano/hilbert-chart
+[npm-downloads-img]: https://img.shields.io/npm/dt/hilbert-chart
+[npm-downloads-url]: https://www.npmtrends.com/hilbert-chart
 
