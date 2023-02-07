@@ -14,11 +14,7 @@ Live example at: https://observablehq.com/@vasturiano/hilbert-map-of-ipv4-addres
 ```js
 import HilbertChart from 'hilbert-chart';
 ```
-or
-```js
-const HilbertChart = require('hilbert-chart');
-```
-or even
+or using a *script* tag
 ```html
 <script src="//unpkg.com/hilbert-chart"></script>
 ```
