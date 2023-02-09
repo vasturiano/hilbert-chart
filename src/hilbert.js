@@ -182,6 +182,8 @@ export default Kapsule({
       .append('svg')
         .style('display', 'block');
 
+    state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
+
     // zoom interaction
     state.zoom = d3Zoom()
       .on('zoom', ev => {
