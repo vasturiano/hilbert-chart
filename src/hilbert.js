@@ -2,7 +2,7 @@ import { select as d3Select, pointer as d3Pointer } from 'd3-selection';
 import { scaleLinear as d3ScaleLinear, scaleOrdinal as d3ScaleOrdinal } from 'd3-scale';
 import { schemePaired as d3SchemePaired } from 'd3-scale-chromatic';
 import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop, axisBottom as d3AxisBottom } from 'd3-axis';
-import { zoom as d3Zoom, zoomTransform as d3ZoomTransform } from 'd3-zoom';
+import { zoom as d3Zoom, zoomTransform as d3ZoomTransform, ZoomTransform } from 'd3-zoom';
 import d3Hilbert from 'd3-hilbert';
 import d3Tip from 'd3-tip';
 import gsap from 'gsap';
@@ -48,17 +48,16 @@ export default Kapsule({
           k: Math.pow(2, state.hilbertOrder) / side
         };
 
-        const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
-
         if (!transitionDuration) { // no animation
-          state.zoom.transform(state.zoom.__baseElem, Object.assign(zoomTransform, destination));
+          state.zoom.transform(state.zoom.__baseElem, new ZoomTransform(destination.k, destination.x, destination.y));
         } else {
+          const t = { ...d3ZoomTransform(state.zoom.__baseElem.node()) }; // { k, x, y }
           gsap.to(
-            zoomTransform,
+            t,
             Object.assign({
               duration: transitionDuration / 1000,
               ease: 'power1.inOut',
-              onUpdate: () => state.zoom.transform(state.zoom.__baseElem, zoomTransform)
+              onUpdate: () => state.zoom.transform(state.zoom.__baseElem, new ZoomTransform(t.k, t.x, t.y))
             }, destination)
           );
         }
