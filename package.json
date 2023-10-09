@@ -49,23 +49,23 @@
     "d3-selection": "2 - 3",
     "d3-tip": "^0.9.1",
     "d3-zoom": "1 - 3",
-    "gsap": "^3.11.4",
+    "gsap": "^3.12",
     "heatmap.js": "^2.0.5",
     "kapsule": "^1.14"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.12",
-    "@babel/preset-env": "^7.20.2",
-    "@rollup/plugin-babel": "^6.0.3",
-    "@rollup/plugin-commonjs": "^24.0.1",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-terser": "^0.4.0",
-    "postcss": "^8.4.21",
-    "rimraf": "^4.1.2",
-    "rollup": "^3.14.0",
-    "rollup-plugin-dts": "^5.1.1",
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.22.20",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.5",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "postcss": "^8.4.31",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.0.2",
+    "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-postcss": "^4.0.2",
-    "typescript": "^4.9.5"
+    "typescript": "^5.2.2"
   },
   "engines": {
     "node": ">=12"
