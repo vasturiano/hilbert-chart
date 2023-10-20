@@ -21,6 +21,7 @@ export default Kapsule({
     hilbertOrder: { default: 4 }, // 0-255 default
     data: { default: [] },
     rangeLabel: { default: 'name' },
+    rangeLabelColor: { default: () => 'black' },
     rangeColor: {},
     rangePadding: { default: 0 },
     valFormatter: { default: d => d },
@@ -376,6 +377,7 @@ export default Kapsule({
   update: function(state) {
     const canvasWidth = state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
     const labelAcessor = accessorFn(state.rangeLabel);
+    const labelColorAccessor = accessorFn(state.rangeLabelColor);
     const colorAccessor = state.rangeColor ? accessorFn(state.rangeColor) : (d => state.defaultColorScale(labelAcessor(d)));
     const _paddingAccessorFn = accessorFn(state.rangePadding);
     const paddingAccessor = d => Math.max(0, Math.min(1, _paddingAccessorFn(d))); // limit to [0, 1] range
@@ -431,6 +433,7 @@ export default Kapsule({
 
       const newPaths = rangePaths.enter().append('g')
         .attr('class', 'hilbert-segment')
+        .attr('fill', labelColorAccessor)
         .on('click', (ev, d) => state.onRangeClick && state.onRangeClick(d))
         .on('mouseover', (ev, d) => {
           state.rangeTooltip.style('display', 'none');
@@ -619,7 +622,7 @@ export default Kapsule({
               scaledW * (1 - relPadding) / name.length * 1.5 // Fit text length
             ) / zoomTransform.k;
             ctx.font = `${fontSize}px Sans-Serif`;
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = labelColorAccessor(d);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(name, ...[x, y].map(c => c + w / 2));
@@ -660,7 +663,7 @@ export default Kapsule({
             scaledW * (path.length - relPadding) / name.length * 1.2 // Fit text length
           ) / zoomTransform.k;
           ctx.font = `${fontSize}px Sans-Serif`;
-          ctx.fillStyle = 'black';
+          ctx.fillStyle = labelColorAccessor(d);
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.lineWidth = 0.01; // no stroke outline

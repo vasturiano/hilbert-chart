@@ -27,6 +27,8 @@ export interface HilbertChartGenericInstance<ChainableInstance> {
   data(data: Range[]): ChainableInstance;
   rangeLabel(): RangeAccessor<string>;
   rangeLabel(textAccessor: RangeAccessor<string>): ChainableInstance;
+  rangeLabelColor(): RangeAccessor<string>;
+  rangeLabelColor(colorAccessor: RangeAccessor<string>): ChainableInstance;
   rangeColor(): RangeAccessor<string>;
   rangeColor(colorAccessor: RangeAccessor<string>): ChainableInstance;
   rangePadding(): RangeAccessor<string>;
