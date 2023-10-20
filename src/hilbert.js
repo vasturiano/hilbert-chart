@@ -28,7 +28,9 @@ export default Kapsule({
     showRangeTooltip: { default: true, triggerUpdate: false },
     rangeTooltipContent: { triggerUpdate: false },
     onRangeClick: { triggerUpdate: false },
-    onRangeHover: { triggerUpdate: false }
+    onRangeHover: { triggerUpdate: false },
+    onZoom: { triggerUpdate: false },
+    onZoomEnd: { triggerUpdate: false }
   },
 
   methods: {
@@ -207,7 +209,10 @@ export default Kapsule({
           state.skipRelayout = true;
           requestAnimationFrame(state._rerender);
         }
-      });
+
+        state.onZoom && state.onZoom({ ...zoomTransform });
+      })
+      .on('end', ev => state.onZoomEnd && state.onZoomEnd({ ...ev.transform }));
 
     let hilbertCanvas;
     if (!useCanvas) { // svg mode
