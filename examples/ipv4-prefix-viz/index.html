@@ -1,0 +1,56 @@
+<head>
+  <title>Hilbert IPv4 Address Space Visualization</title>
+
+  <script src='//unpkg.com/ip.js'></script>
+
+  <script src='//unpkg.com/hilbert-chart'></script>
+<!--    <script src='../../dist/hilbert-chart.js'></script>-->
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+    }
+    #ipv4-chart { display: inline-block; }
+  </style>
+</head>
+<body>
+<div id='ipv4-chart'></div>
+
+<script>
+  const CIDR = 20;
+
+  const numBlocks = 2**CIDR;
+  const blockLen = 2**(32-CIDR);
+  const blockData = [];
+  for (let i=0; i < numBlocks; i++) {
+    blockData.push({
+      start: i * blockLen,
+      length: blockLen,
+      color: ['red', 'green', 'blue', 'yellow', 'orange', 'cyan'][Math.floor(Math.random()*6)]
+    });
+  }
+
+  HilbertChart({ useCanvas: true })
+    .hilbertOrder(32 / 2)
+    .data(blockData)
+    // .rangePadding(0.03)
+    .valFormatter(ipFormatter)
+    .rangeLabel(() => '')
+    .rangeColor('color')
+    .rangeTooltipContent(prefixFormatter)
+    .onRangeClick(console.log)
+    (document.getElementById('ipv4-chart'));
+
+  function ipFormatter(d) {
+    return new Ip.Addr(d).toString();
+  }
+
+  function prefixFormatter(d) {
+    const ipRange = new Ip.Range(d.start, d.start + d.length - 1),
+      prefixes = ipRange.toPrefixes();
+
+    return (prefixes.length === 1 ? prefixes[0] : ipRange).toString();
+  }
+</script>
+</body>
