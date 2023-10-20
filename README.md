@@ -37,7 +37,7 @@ HilbertChart({ configOptions })(<domElement>)
 
 | Config options | Description | Default |
 | --- | --- | :--: |
-| <b>useCanvas</b>: <i>boolean</i> | Whether to use **HTML5 Canvas** (`true`) or **SVG** (`false`) as rendering method. Range tooltips and click/hover events are not supported in Canvas mode, but it yields much better rendering performance for very large number of items. | `false` |
+| <b>useCanvas</b>: <i>boolean</i> | Whether to use **HTML5 Canvas** (`true`) or **SVG** (`false`) as rendering method. Canvas yields much better rendering performance for very large number of items. | `false` |
 
 ### Methods
 
