@@ -10,6 +10,7 @@ import './canvas-textpath/ctxtextpath.js';
 import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
+import ColorTracker from 'canvas-color-tracker';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
 
@@ -158,12 +159,15 @@ export default Kapsule({
   },
 
   stateInit() {
+    const shadowCanvasEl = document.createElement('canvas');
     return {
       hilbert: d3Hilbert().simplifyCurves(true),
       defaultColorScale: d3ScaleOrdinal(d3SchemePaired),
       zoomBox: [[0, 0], [N_TICKS, N_TICKS]],
       axisScaleX: d3ScaleLinear().domain([0, N_TICKS]),
-      axisScaleY: d3ScaleLinear().domain([0, N_TICKS])
+      axisScaleY: d3ScaleLinear().domain([0, N_TICKS]),
+      shadowCanvasEl,
+      shadowCtx: shadowCanvasEl.getContext('2d', { willReadFrequently: true })
     };
   },
 
@@ -240,7 +244,6 @@ export default Kapsule({
           .attr('class', 'hilbert-canvas')
           .style('display', 'block')
           .style('position', 'absolute');
-      state.hilbertCanvasCtx = hilbertCanvas.node().getContext('2d');
 
       // Zoom binding
       hilbertCanvas.call(state.zoom);
@@ -269,24 +272,61 @@ export default Kapsule({
     valTooltip.classed('hilbert-tooltip', true);
 
     hilbertCanvas.on('mouseover', () => state.showValTooltip && valTooltip.style('display', 'inline'));
-    hilbertCanvas.on('mouseout', () => valTooltip.style('display', 'none'));
+    hilbertCanvas.on('mouseout', () => {
+      valTooltip.style('display', 'none');
+      rangeTooltip.style('display', 'none');
+
+      if (state.useCanvas && state.hoverD) {
+        state.hoverD = null;
+        state.onRangeHover && state.onRangeHover(null);
+      }
+    });
+    hilbertCanvas.on('click', () => state.useCanvas && state.onRangeClick && state.hoverD && state.onRangeClick(state.hoverD));
     hilbertCanvas.on('mousemove', function(ev) {
+      const coords = d3Pointer(ev);
+
+      // Hover detection based on shadow canvas
+      if (state.useCanvas && (state.onRangeHover || state.showRangeTooltip)) {
+        const pxScale = window.devicePixelRatio;
+        const hoverD = state.colorTracker.lookup(state.shadowCtx.getImageData(...coords.map(c => c * pxScale), 1, 1).data);
+
+        if (hoverD !== state.hoverD) {
+          state.hoverD = hoverD;
+
+          state.rangeTooltip.style('display', 'none');
+          if (hoverD) {
+            if (state.showRangeTooltip) {
+              state.rangeTooltip.style('display', 'inline');
+
+              const d = hoverD;
+              if (state.rangeTooltipContent) {
+                state.rangeTooltip.html(accessorFn(state.rangeTooltipContent)(d));
+              } else {
+                // default tooltip
+                const rangeLabel = accessorFn(state.rangeLabel);
+                const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
+                state.rangeTooltip.html(`<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`);
+              }
+            }
+          }
+          state.onRangeHover && state.onRangeHover(hoverD || null);
+        }
+      }
+
       if (state.showValTooltip) {
-        let coords = d3Pointer(ev);
+        const c = coords.slice();
         if (state.useCanvas) {
           // Need to consider zoom on canvas
           const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
-          coords[0] -= zoomTransform.x;
-          coords[0] /= zoomTransform.k;
-          coords[1] -= zoomTransform.y;
-          coords[1] /= zoomTransform.k;
+          c[0] -= zoomTransform.x;
+          c[0] /= zoomTransform.k;
+          c[1] -= zoomTransform.y;
+          c[1] /= zoomTransform.k;
         }
-
-        valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(coords[0], coords[1])))
+        valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(...c)))
           .style('left', `${ev.pageX}px`)
           .style('top', `${ev.pageY}px`);
       }
-
       if (state.showRangeTooltip) {
         rangeTooltip
           .style('left', `${ev.pageX}px`)
@@ -503,31 +543,45 @@ export default Kapsule({
 
     function canvasUpdate() {
       const pxScale = window.devicePixelRatio; // 2 on retina displays
-      const ctx = state.hilbertCanvasCtx;
 
       // canvas resize (and clear)
       state.hilbertCanvas
         .style('top', `${state.margin}px`)
         .style('left', `${state.margin}px`)
         .style('width', `${canvasWidth}px`)
-        .style('height', `${canvasWidth}px`)
-        .attr('width', state.canvasWidth * pxScale)
-        .attr('height', state.canvasWidth * pxScale);
+        .style('height', `${canvasWidth}px`);
 
-      ctx.clearRect(0, 0, canvasWidth, canvasWidth);
+      [state.hilbertCanvas.node(), state.shadowCanvasEl].forEach(canvasEl => {
+        // Memory size (scaled to avoid blurriness)
+        canvasEl.width = state.canvasWidth * pxScale;
+        canvasEl.height = state.canvasWidth * pxScale;
+      });
 
-      // Apply zoom transform (respecting pxScale)
       const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
-      ctx.translate(zoomTransform.x * pxScale, zoomTransform.y * pxScale);
-      ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
-
       const viewWindow = { // in px
         x: -zoomTransform.x / zoomTransform.k,
         y: -zoomTransform.y / zoomTransform.k,
         len: canvasWidth / zoomTransform.k
       };
 
-      for (let i = 0, len = state.data.length; i < len ; i++) {
+      const ctx = state.hilbertCanvas.node().getContext('2d');
+      const shadowCtx = state.shadowCtx;
+
+      [ctx, shadowCtx].forEach(ctx => {
+        ctx.clearRect(0, 0, canvasWidth, canvasWidth);
+
+        // Apply zoom transform (respecting pxScale)
+        ctx.translate(zoomTransform.x * pxScale, zoomTransform.y * pxScale);
+        ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
+      });
+
+      // indexed blocks for rgb lookup
+      const n = state.data.length;
+      state.colorTracker = new ColorTracker(
+        n < 250e3 ? 6 : n < 500e3 ? 5 : n < 1e6 ? 4 : n < 2e6 ? 3 : n < 4e6 ? 2 : n < 8e6 ? 1 : 0
+      );
+
+      for (let i = 0; i < n ; i++) {
         const d = state.data[i];
 
         const w = d.cellWidth;
@@ -545,7 +599,12 @@ export default Kapsule({
           const rectW = w * (1 - relPadding);
 
           ctx.fillStyle = colorAccessor(d);
-          ctx.fillRect(x + rectPadding, y + rectPadding, rectW, rectW);
+          const ctxs = [ctx];
+          if (scaledW >= 1) { // don't bother registering sub-pixel squares on shadow canvas, it kills performance
+            shadowCtx.fillStyle = state.colorTracker.register(d);
+            ctxs.push(shadowCtx);
+          }
+          ctxs.forEach(ctx => ctx.fillRect(x + rectPadding, y + rectPadding, rectW, rectW));
 
           if (scaledW > 12) { // Hide labels on small square cells
             const name = labelAcessor(d);
@@ -573,12 +632,15 @@ export default Kapsule({
           })];
 
           ctx.strokeStyle = colorAccessor(d);
-          ctx.lineWidth = w * (1 - relPadding);
-          ctx.lineCap = 'square';
-          ctx.beginPath();
-          ctx.moveTo(...path[0]);
-          path.slice(1).forEach(([x, y]) => ctx.lineTo(x, y));
-          ctx.stroke();
+          shadowCtx.strokeStyle = state.colorTracker.register(d);
+          [ctx, shadowCtx].forEach(ctx => {
+            ctx.lineWidth = w * (1 - relPadding);
+            ctx.lineCap = 'square';
+            ctx.beginPath();
+            ctx.moveTo(...path[0]);
+            path.slice(1).forEach(([x, y]) => ctx.lineTo(x, y));
+            ctx.stroke();
+          });
 
           // extend path extremities to cell edges for textpath
           const pathStart = path[0].map((c, idx) => c - (path[1][idx] - c) / 2);
