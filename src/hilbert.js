@@ -13,7 +13,7 @@ import accessorFn from 'accessor-fn';
 import ColorTracker from 'canvas-color-tracker';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
-const MAX_OBJECTS_TO_ANIMATE_ZOOM = 400e3; // To prevent blocking interaction in canvas mode
+const MAX_OBJECTS_TO_ANIMATE_ZOOM = 90e3; // To prevent blocking interaction in canvas mode
 
 export default Kapsule({
   props: {
@@ -586,7 +586,7 @@ export default Kapsule({
         ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
       });
 
-      const dataInView = state.data.filter(d => {
+      let dataInView = state.data.filter(d => {
         if (d.pathVertices.length) return true; // Can't judge multi-cell
 
         const w = d.cellWidth;
@@ -595,10 +595,14 @@ export default Kapsule({
         return !(x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x || y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y);
       });
 
-      const n = dataInView.length;
-      if (state.zooming && n > MAX_OBJECTS_TO_ANIMATE_ZOOM) return; // don't animate zoom for a lot of objects
+      if (state.zooming && dataInView.length > MAX_OBJECTS_TO_ANIMATE_ZOOM) {
+        // sample high volume of objects when animating zoom
+        const sampleStep = Math.ceil(dataInView.length / MAX_OBJECTS_TO_ANIMATE_ZOOM);
+        dataInView = dataInView.filter((_, idx) => !(idx%sampleStep));
+      }
 
       // indexed blocks for rgb lookup
+      const n = dataInView.length;
       state.colorTracker = new ColorTracker(
         n < 250e3 ? 6 : n < 500e3 ? 5 : n < 1e6 ? 4 : n < 2e6 ? 3 : n < 4e6 ? 2 : n < 8e6 ? 1 : 0
       );
