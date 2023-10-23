@@ -601,9 +601,26 @@ export default Kapsule({
       });
 
       if (state.zooming && dataInView.length > MAX_OBJECTS_TO_ANIMATE_ZOOM) {
-        // sample high volume of objects when animating zoom
-        const sampleStep = Math.ceil(dataInView.length / MAX_OBJECTS_TO_ANIMATE_ZOOM);
-        dataInView = dataInView.filter((_, idx) => !(idx%sampleStep));
+        const getBitBoundary = n => {
+          if (!n) return 0;
+          let cnt = 0;
+          while(!(n%1)) { n /= 2; cnt++; }
+          return cnt;
+        }
+
+        // prefer larger objects on a bit boundary
+        const keepIdxs = new Set(dataInView
+          .map((d, idx) => ({
+            idx,
+            size: d.cellWidth,
+            bitBoundary: getBitBoundary(d.start)
+          }))
+          .sort((a, b) => (b.size - a.size) || (b.bitBoundary - a.bitBoundary))
+          .slice(0, MAX_OBJECTS_TO_ANIMATE_ZOOM)
+          .map(({ idx }) => idx)
+        );
+
+        dataInView = dataInView.filter((_, idx) => keepIdxs.has(idx));
       }
 
       // indexed blocks for rgb lookup
