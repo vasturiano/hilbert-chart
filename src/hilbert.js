@@ -14,6 +14,7 @@ import ColorTracker from 'canvas-color-tracker';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
 const MAX_OBJECTS_TO_ANIMATE_ZOOM = 90e3; // To prevent blocking interaction in canvas mode
+const MAX_OBJECTS_TO_ALWAYS_UPDATE_SHADOW_CANVAS = 9e3; // Threshold to update canvas color interaction during zooming
 
 export default Kapsule({
   props: {
@@ -606,7 +607,7 @@ export default Kapsule({
           let cnt = 0;
           while(!(n%1)) { n /= 2; cnt++; }
           return cnt;
-        }
+        };
 
         // prefer larger objects on a bit boundary
         const keepIdxs = new Set(dataInView
@@ -629,6 +630,8 @@ export default Kapsule({
         n < 250e3 ? 6 : n < 500e3 ? 5 : n < 1e6 ? 4 : n < 2e6 ? 3 : n < 4e6 ? 2 : n < 8e6 ? 1 : 0
       );
 
+      const updateShadowCanvas = !state.zooming || n < MAX_OBJECTS_TO_ALWAYS_UPDATE_SHADOW_CANVAS;
+
       for (let i = 0; i < n ; i++) {
         const d = dataInView[i];
 
@@ -644,7 +647,7 @@ export default Kapsule({
 
           ctx.fillStyle = colorAccessor(d);
           const ctxs = [ctx];
-          if (!state.zooming && scaledW >= 1) { // don't bother registering sub-pixel squares on shadow canvas, it kills performance
+          if (updateShadowCanvas && scaledW >= 1) { // don't bother registering sub-pixel squares on shadow canvas, it kills performance
             shadowCtx.fillStyle = state.colorTracker.register(d);
             ctxs.push(shadowCtx);
           }
@@ -677,7 +680,7 @@ export default Kapsule({
 
           ctx.strokeStyle = colorAccessor(d);
           const ctxs = [ctx];
-          if (!state.zooming) {
+          if (updateShadowCanvas) {
             shadowCtx.strokeStyle = state.colorTracker.register(d);
             ctxs.push(shadowCtx);
           }
