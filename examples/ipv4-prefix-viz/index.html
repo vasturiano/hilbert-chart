@@ -31,14 +31,14 @@
     });
   }
 
-  HilbertChart({ useCanvas: true })
+  const chart = HilbertChart({ useCanvas: true })
     .hilbertOrder(32 / 2)
     .data(blockData)
     .valFormatter(ipFormatter)
     .rangeLabel(() => '')
     .rangeColor('color')
     .rangeTooltipContent(prefixFormatter)
-    .onRangeClick(console.log)
+    .onRangeClick(d => chart.focusOn(d.start, d.length, 3000))
     (document.getElementById('ipv4-chart'));
 
   function ipFormatter(d) {

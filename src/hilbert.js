@@ -13,6 +13,7 @@ import accessorFn from 'accessor-fn';
 import ColorTracker from 'canvas-color-tracker';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
+const MAX_OBJECTS_TO_ANIMATE_ZOOM = 400e3; // To prevent blocking interaction in canvas mode
 
 export default Kapsule({
   props: {
@@ -207,13 +208,21 @@ export default Kapsule({
           this._refreshAxises();
         } else { // canvas
           // reapply zoom transform on rerender (without recalculating layout)
+          state.zooming = true;
           state.skipRelayout = true;
           requestAnimationFrame(state._rerender);
         }
 
         state.onZoom && state.onZoom({ ...zoomTransform });
       })
-      .on('end', ev => state.onZoomEnd && state.onZoomEnd({ ...ev.transform }));
+      .on('end', ev => {
+        if (useCanvas) {
+          state.zooming = false;
+          state.skipRelayout = true;
+          requestAnimationFrame(state._rerender);
+        }
+        state.onZoomEnd && state.onZoomEnd({ ...ev.transform })
+      });
 
     let hilbertCanvas;
     if (!useCanvas) { // svg mode
@@ -577,14 +586,25 @@ export default Kapsule({
         ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
       });
 
+      const dataInView = state.data.filter(d => {
+        if (d.pathVertices.length) return true; // Can't judge multi-cell
+
+        const w = d.cellWidth;
+        const [x, y] = d.startCell.map(c => c * w);
+        // cell out of view, no need to draw
+        return !(x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x || y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y);
+      });
+
+      const n = dataInView.length;
+      if (state.zooming && n > MAX_OBJECTS_TO_ANIMATE_ZOOM) return; // don't animate zoom for a lot of objects
+
       // indexed blocks for rgb lookup
-      const n = state.data.length;
       state.colorTracker = new ColorTracker(
         n < 250e3 ? 6 : n < 500e3 ? 5 : n < 1e6 ? 4 : n < 2e6 ? 3 : n < 4e6 ? 2 : n < 8e6 ? 1 : 0
       );
 
       for (let i = 0; i < n ; i++) {
-        const d = state.data[i];
+        const d = dataInView[i];
 
         const w = d.cellWidth;
         const scaledW = w * zoomTransform.k;
@@ -593,16 +613,12 @@ export default Kapsule({
         if (d.pathVertices.length === 0) { // single cell -> draw a square
           const [x, y] = d.startCell.map(c => c * w);
 
-          if (x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x || y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y) {
-            continue; // cell out of view, no need to draw
-          }
-
           const rectPadding = relPadding * w / 2;
           const rectW = w * (1 - relPadding);
 
           ctx.fillStyle = colorAccessor(d);
           const ctxs = [ctx];
-          if (scaledW >= 1) { // don't bother registering sub-pixel squares on shadow canvas, it kills performance
+          if (!state.zooming && scaledW >= 1) { // don't bother registering sub-pixel squares on shadow canvas, it kills performance
             shadowCtx.fillStyle = state.colorTracker.register(d);
             ctxs.push(shadowCtx);
           }
@@ -634,8 +650,12 @@ export default Kapsule({
           })];
 
           ctx.strokeStyle = colorAccessor(d);
-          shadowCtx.strokeStyle = state.colorTracker.register(d);
-          [ctx, shadowCtx].forEach(ctx => {
+          const ctxs = [ctx];
+          if (!state.zooming) {
+            shadowCtx.strokeStyle = state.colorTracker.register(d);
+            ctxs.push(shadowCtx);
+          }
+          ctxs.forEach(ctx => {
             ctx.lineWidth = w * (1 - relPadding);
             ctx.lineCap = 'square';
             ctx.beginPath();
