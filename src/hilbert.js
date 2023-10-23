@@ -62,7 +62,11 @@ export default Kapsule({
             Object.assign({
               duration: transitionDuration / 1000,
               ease: 'power1.inOut',
-              onUpdate: () => state.zoom.transform(state.zoom.__baseElem, new ZoomTransform(t.k, t.x, t.y))
+              onUpdate: () => {
+                state.zooming = true;
+                state.zoom.transform(state.zoom.__baseElem, new ZoomTransform(t.k, t.x, t.y))
+              },
+              onComplete: () => state.zooming = false,
             }, destination)
           );
         }
@@ -195,6 +199,7 @@ export default Kapsule({
     state.zoom = d3Zoom()
       .on('zoom', ev => {
         const zoomTransform = ev.transform;
+        ev.sourceEvent && (state.zooming = true);
 
         // Adjust axes
         const xScale = state.zoomedAxisScaleX = zoomTransform.rescaleX(state.axisScaleX);
@@ -208,7 +213,6 @@ export default Kapsule({
           this._refreshAxises();
         } else { // canvas
           // reapply zoom transform on rerender (without recalculating layout)
-          state.zooming = true;
           state.skipRelayout = true;
           requestAnimationFrame(state._rerender);
         }
@@ -216,8 +220,9 @@ export default Kapsule({
         state.onZoom && state.onZoom({ ...zoomTransform });
       })
       .on('end', ev => {
+        if (ev.sourceEvent && ev.sourceEvent.type === 'mouseup' && !state.zooming) return; // ignore clicks without drag
+        ev.sourceEvent && (state.zooming = false); // end of interactive zoom
         if (useCanvas) {
-          state.zooming = false;
           state.skipRelayout = true;
           requestAnimationFrame(state._rerender);
         }
@@ -242,7 +247,7 @@ export default Kapsule({
       hilbertCanvas.append('g').attr('class', 'markers-canvas');
 
       // Zoom binding
-      zoomCanvas.call(state.zoom);
+      zoomCanvas.call(state.zoom).on("dblclick.zoom", null);
       state.zoom.__baseElem = zoomCanvas; // Attach controlling elem for easy access
 
       defs.append('clipPath')
@@ -261,7 +266,7 @@ export default Kapsule({
           .style('position', 'absolute');
 
       // Zoom binding
-      hilbertCanvas.call(state.zoom);
+      hilbertCanvas.call(state.zoom).on("dblclick.zoom", null);
       state.zoom.__baseElem = hilbertCanvas; // Attach controlling elem for easy access
     }
 
