@@ -300,21 +300,18 @@ export default Kapsule({
           state.hoverD = hoverD;
 
           state.rangeTooltip.style('display', 'none');
-          if (hoverD) {
-            if (state.showRangeTooltip) {
-              state.rangeTooltip.style('display', 'inline');
+          if (hoverD && state.showRangeTooltip) {
+            const d = hoverD;
+            const tooltipContent = state.rangeTooltipContent
+              ? accessorFn(state.rangeTooltipContent)(d)
+              // default tooltip
+              : `<b>${accessorFn(state.rangeLabel)(d)}</b>: ${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
 
-              const d = hoverD;
-              if (state.rangeTooltipContent) {
-                state.rangeTooltip.html(accessorFn(state.rangeTooltipContent)(d));
-              } else {
-                // default tooltip
-                const rangeLabel = accessorFn(state.rangeLabel);
-                const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
-                state.rangeTooltip.html(`<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`);
-              }
-            }
+            state.rangeTooltip.html(tooltipContent || '');
+            tooltipContent && state.rangeTooltip.style('display', 'inline');
           }
+
+          hilbertCanvas.style('cursor', hoverD && state.onRangeClick ? 'pointer' : null);
           state.onRangeHover && state.onRangeHover(hoverD || null);
         }
       }
@@ -439,16 +436,13 @@ export default Kapsule({
           state.rangeTooltip.style('display', 'none');
 
           if (state.showRangeTooltip) {
-            state.rangeTooltip.style('display', 'inline');
-
-            if (state.rangeTooltipContent) {
-              state.rangeTooltip.html(accessorFn(state.rangeTooltipContent)(d));
-            } else {
+            const tooltipContent = state.rangeTooltipContent
+              ? accessorFn(state.rangeTooltipContent)(d)
               // default tooltip
-              const rangeLabel = accessorFn(state.rangeLabel);
-              const rangeFormatter = d => state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '');
-              state.rangeTooltip.html(`<b>${rangeLabel(d)}</b>: ${rangeFormatter(d)}`);
-            }
+              : `<b>${accessorFn(state.rangeLabel)(d)}</b>: ${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
+
+            state.rangeTooltip.html(tooltipContent || '');
+            tooltipContent && state.rangeTooltip.style('display', 'inline');
           }
 
           state.onRangeHover && state.onRangeHover(d);
