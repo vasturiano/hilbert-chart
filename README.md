@@ -56,6 +56,7 @@ HilbertChart({ configOptions })(<domElement>)
 | <b>showValTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a value tooltip on mouse-over. | `true` |
 | <b>showRangeTooltip</b>([<i>boolean</i>]) | Getter/setter for whether to show a range tooltip on mouse-over. | `true` |
 | <b>rangeTooltipContent</b>([<i>string</i> or <i>fn</i>]) | Getter/setter for the range object tooltip content accessor function or attribute. Supports plain text or HTML content. | `<label>: <start> - <end>` |
+| <b>enableZoom</b>([<i>boolean</i>]) | Getter/setter for whether to enable zoom/pan interaction in the chart. | `true` |
 | <b>onRangeClick</b>(<i>fn</i>) | Callback function for range clicks. The range object is included as single argument `onRangeClick(range)`. | - |
 | <b>onRangeHover</b>(<i>fn</i>) | Callback function for range mouse over events. The range object (or `null` if hovering out) is included as single argument `onRangeHover(range)`. | - |
 | <b>onZoom</b>(<i>fn</i>) | Callback function for zoom/pan events. The current zoom transform is included as single argument `onZoom({ k, x, y })`. Note that `onZoom` is triggered by user interaction as well as programmatic zooming/panning with `focusOn()`. | - |

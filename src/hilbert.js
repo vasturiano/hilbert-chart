@@ -30,6 +30,7 @@ export default Kapsule({
     showValTooltip: { default: true, triggerUpdate: false },
     showRangeTooltip: { default: true, triggerUpdate: false },
     rangeTooltipContent: { triggerUpdate: false },
+    enableZoom: { default: true, triggerUpdate: false },
     onRangeClick: { triggerUpdate: false },
     onRangeHover: { triggerUpdate: false },
     onZoom: { triggerUpdate: false },
@@ -199,6 +200,8 @@ export default Kapsule({
     // zoom interaction
     state.zoom = d3Zoom()
       .on('zoom', ev => {
+        if (!state.enableZoom && ev.sourceEvent) return;
+
         const zoomTransform = ev.transform;
         ev.sourceEvent && (state.zooming = true);
 
@@ -221,6 +224,8 @@ export default Kapsule({
         state.onZoom && state.onZoom({ ...zoomTransform });
       })
       .on('end', ev => {
+        if (!state.enableZoom && ev.sourceEvent) return;
+
         if (ev.sourceEvent && ev.sourceEvent.type === 'mouseup' && !state.zooming) return; // ignore clicks without drag
         ev.sourceEvent && (state.zooming = false); // end of interactive zoom
         if (useCanvas) {

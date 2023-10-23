@@ -44,6 +44,8 @@ export interface HilbertChartGenericInstance<ChainableInstance> {
   showRangeTooltip(show: boolean): ChainableInstance;
   rangeTooltipContent(): RangeAccessor<string>;
   rangeTooltipContent(contentAccessor: RangeAccessor<string>): ChainableInstance;
+  enableZoom(): boolean;
+  enableZoom(enable: boolean): ChainableInstance;
 
   onRangeClick(cb: (range: Range) => void): ChainableInstance;
   onRangeHover(cb: (range: Range | null) => void): ChainableInstance;
