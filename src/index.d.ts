@@ -49,7 +49,7 @@ export interface HilbertChartGenericInstance<ChainableInstance> {
 
   onRangeClick(cb: (range: Range) => void): ChainableInstance;
   onRangeHover(cb: (range: Range | null) => void): ChainableInstance;
-
+  onPointerMove(cb: (value: number, event: MouseEvent) => void): ChainableInstance;
   onZoom(callback: (transform: {k: number, x: number, y: number}) => void): ChainableInstance;
   onZoomEnd(callback: (transform: {k: number, x: number, y: number}) => void): ChainableInstance;
 }

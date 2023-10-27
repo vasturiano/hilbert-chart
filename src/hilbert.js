@@ -33,6 +33,7 @@ export default Kapsule({
     enableZoom: { default: true, triggerUpdate: false },
     onRangeClick: { triggerUpdate: false },
     onRangeHover: { triggerUpdate: false },
+    onPointerMove: { triggerUpdate: false },
     onZoom: { triggerUpdate: false },
     onZoomEnd: { triggerUpdate: false }
   },
@@ -326,7 +327,7 @@ export default Kapsule({
       const offset = getOffset(d3El.node());
       const pointerPos = { x: ev.pageX - offset.left, y: ev.pageY - offset.top };
 
-      if (state.showValTooltip) {
+      if (state.showValTooltip || state.onPointerMove) {
         const c = coords.slice();
         if (state.useCanvas) {
           // Need to consider zoom on canvas
@@ -336,9 +337,14 @@ export default Kapsule({
           c[1] -= zoomTransform.y;
           c[1] /= zoomTransform.k;
         }
-        valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(...c)))
+
+        const val = state.hilbert.getValAtXY(...c);
+
+        state.showValTooltip && valTooltip.text(state.valFormatter(val))
           .style('left', `${pointerPos.x}px`)
           .style('top', `${pointerPos.y}px`);
+
+        state.onPointerMove && state.onPointerMove(val, ev);
       }
       if (state.showRangeTooltip) {
         rangeTooltip
