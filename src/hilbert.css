@@ -1,5 +1,6 @@
 .hilbert-chart {
-  font-family: Sans-serif;
+  position: relative;
+  font-family: sans-serif;
 }
 
 .hilbert-chart .hilbert-segment path {
@@ -24,26 +25,25 @@
   pointer-events: none;
 }
 
-.hilbert-tooltip {
+.hilbert-chart .hilbert-tooltip {
   color: #eee;
   background: rgba(0, 0, 0, 0.6);
   padding: 5px;
   border-radius: 3px;
   font: 11px sans-serif;
-  text-align: center;
   pointer-events: none;
 }
 
-.hilbert-tooltip#val-tooltip {
+.hilbert-chart .hilbert-tooltip.val-tooltip {
   display: none;
   position: absolute;
   margin-top: 20px;
   margin-left: -10px;
  }
 
-.hilbert-tooltip#range-tooltip {
+.hilbert-chart .hilbert-tooltip.range-tooltip {
   display: none;
   position: absolute;
-  margin-top: -44px;
-  transform: translateX(-50%);
+  margin-top: -12px;
+  transform: translate(-50%, -100%);
 }

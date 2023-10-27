@@ -277,25 +277,12 @@ export default Kapsule({
     }
 
     // Range Tooltip
-    let rangeTooltip = d3Select('#range-tooltip');
-
-    if (rangeTooltip.empty()) {
-      rangeTooltip = d3Select('body').append('div')
-        .attr('id', 'range-tooltip')
-    }
-
-    rangeTooltip.classed('hilbert-tooltip', true);
-    state.rangeTooltip = rangeTooltip;
+    const rangeTooltip = state.rangeTooltip = d3El.append('div')
+      .attr('class', 'hilbert-tooltip range-tooltip')
 
     // Value Tooltip
-    let valTooltip = d3Select('#val-tooltip');
-
-    if (valTooltip.empty()) {
-      valTooltip = d3Select('body').append('div')
-        .attr('id', 'val-tooltip')
-    }
-
-    valTooltip.classed('hilbert-tooltip', true);
+    const valTooltip = d3El.append('div')
+      .attr('class', 'hilbert-tooltip val-tooltip')
 
     hilbertCanvas.on('mouseover', () => state.showValTooltip && valTooltip.style('display', 'inline'));
     hilbertCanvas.on('mouseout', () => {
@@ -336,6 +323,9 @@ export default Kapsule({
         }
       }
 
+      const offset = getOffset(d3El.node());
+      const pointerPos = { x: ev.pageX - offset.left, y: ev.pageY - offset.top };
+
       if (state.showValTooltip) {
         const c = coords.slice();
         if (state.useCanvas) {
@@ -347,13 +337,20 @@ export default Kapsule({
           c[1] /= zoomTransform.k;
         }
         valTooltip.text(state.valFormatter(state.hilbert.getValAtXY(...c)))
-          .style('left', `${ev.pageX}px`)
-          .style('top', `${ev.pageY}px`);
+          .style('left', `${pointerPos.x}px`)
+          .style('top', `${pointerPos.y}px`);
       }
       if (state.showRangeTooltip) {
         rangeTooltip
-          .style('left', `${ev.pageX}px`)
-          .style('top', `${ev.pageY}px`);
+          .style('left', `${pointerPos.x}px`)
+          .style('top', `${pointerPos.y}px`);
+      }
+
+      function getOffset(el) {
+        const rect = el.getBoundingClientRect(),
+          scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
+          scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        return { top: rect.top + scrollTop, left: rect.left + scrollLeft };
       }
     });
 
