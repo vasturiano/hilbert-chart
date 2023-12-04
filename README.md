@@ -38,6 +38,7 @@ HilbertChart({ configOptions })(<domElement>)
 | Config options | Description | Default |
 | --- | --- | :--: |
 | <b>useCanvas</b>: <i>boolean</i> | Whether to use **HTML5 Canvas** (`true`) or **SVG** (`false`) as rendering method. Canvas yields much better rendering performance for very large number of items. | `false` |
+| <b>zoomWithModKey</b>: <i>boolean</i> | Whether to require a modifier key (meta or ctrl) to be pressed in order to activate the scrolling zoom. | `false` |
 
 ### Methods
 

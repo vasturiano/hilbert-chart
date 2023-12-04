@@ -1,4 +1,4 @@
-import { select as d3Select, pointer as d3Pointer } from 'd3-selection';
+import { create as d3Create, select as d3Select, pointer as d3Pointer } from 'd3-selection';
 import { scaleLinear as d3ScaleLinear, scaleOrdinal as d3ScaleOrdinal } from 'd3-scale';
 import { schemePaired as d3SchemePaired } from 'd3-scale-chromatic';
 import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop, axisBottom as d3AxisBottom } from 'd3-axis';
@@ -11,6 +11,7 @@ import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
 import ColorTracker from 'canvas-color-tracker';
+import ScrollZoomClamp from 'scroll-zoom-clamp';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
 const MAX_OBJECTS_TO_ANIMATE_ZOOM = 90e3; // To prevent blocking interaction in canvas mode
@@ -182,19 +183,21 @@ export default Kapsule({
     };
   },
 
-  init: function(el, state, { useCanvas = false }) {
+  init: function(el, state, { useCanvas = false, zoomWithModKey = false }) {
     const isD3Selection = !!el && typeof el === 'object' && !!el.node && typeof el.node === 'function';
     const d3El = d3Select(isD3Selection ? el.node() : el);
     d3El.html(null); // Wipe DOM
+    d3El.attr('class', 'hilbert-chart');
 
     // Dom
     state.nodeElem = d3El.node();
     state.useCanvas = useCanvas;
 
-    const svg = state.svg = d3El
-      .attr('class', 'hilbert-chart')
-      .append('svg')
-        .style('display', 'block');
+    const svg = state.svg = d3Create('svg').style('display', 'block');
+    d3El.node().appendChild(useCanvas || !zoomWithModKey
+      ? svg.node()
+      : new ScrollZoomClamp(svg.node()).node
+    );
 
     state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
 
@@ -265,12 +268,17 @@ export default Kapsule({
 
       zoomCanvas.attr('clip-path', 'url(#canvas-cp)');
     } else { // Canvas mode
-      hilbertCanvas = state.hilbertCanvas = d3El
-        .style('position', 'relative')
-        .append('canvas')
+      d3El.style('position', 'relative');
+
+      hilbertCanvas = state.hilbertCanvas = d3Create('canvas')
           .attr('class', 'hilbert-canvas')
-          .style('display', 'block')
-          .style('position', 'absolute');
+          .style('display', 'block');
+
+      const canvasWrapper = state.hilbertCanvasWrapper = zoomWithModKey
+        ? d3Select(new ScrollZoomClamp(hilbertCanvas.node()).node)
+        : hilbertCanvas;
+      canvasWrapper.style('position', 'absolute');
+      d3El.node().appendChild(canvasWrapper.node());
 
       // Zoom binding
       hilbertCanvas.call(state.zoom).on("dblclick.zoom", null);
@@ -279,11 +287,11 @@ export default Kapsule({
 
     // Range Tooltip
     const rangeTooltip = state.rangeTooltip = d3El.append('div')
-      .attr('class', 'hilbert-tooltip range-tooltip')
+      .attr('class', 'hilbert-tooltip range-tooltip');
 
     // Value Tooltip
     const valTooltip = d3El.append('div')
-      .attr('class', 'hilbert-tooltip val-tooltip')
+      .attr('class', 'hilbert-tooltip val-tooltip');
 
     hilbertCanvas.on('mouseover', () => state.showValTooltip && valTooltip.style('display', 'inline'));
     hilbertCanvas.on('mouseout', () => {
@@ -570,9 +578,10 @@ export default Kapsule({
       const pxScale = window.devicePixelRatio; // 2 on retina displays
 
       // canvas resize (and clear)
-      state.hilbertCanvas
+      state.hilbertCanvasWrapper
         .style('top', `${state.margin}px`)
-        .style('left', `${state.margin}px`)
+        .style('left', `${state.margin}px`);
+      state.hilbertCanvas
         .style('width', `${canvasWidth}px`)
         .style('height', `${canvasWidth}px`);
 
