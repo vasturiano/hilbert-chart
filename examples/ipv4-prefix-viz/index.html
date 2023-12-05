@@ -37,6 +37,7 @@
     .valFormatter(ipFormatter)
     .rangeLabel(() => '')
     .rangeColor('color')
+    .showValTooltip(false)
     .rangeTooltipContent(prefixFormatter)
     .onRangeClick(d => chart.focusOn(d.start, d.length, 3000))
     (document.getElementById('ipv4-chart'));
