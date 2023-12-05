@@ -654,7 +654,7 @@ export default Kapsule({
         const scaledW = w * zoomTransform.k;
         const relPadding = paddingAccessor(d);
         const absPadding = paddingAbsAccessor(d);
-        const padding = Math.min(w * 0.5, (relPadding * w + absPadding) / zoomTransform.k);
+        const padding = Math.min(w * 0.5, relPadding * w + absPadding / zoomTransform.k);
 
         if (d.pathVertices.length === 0) { // single cell -> draw a square
           const [x, y] = d.startCell.map(c => c * w);

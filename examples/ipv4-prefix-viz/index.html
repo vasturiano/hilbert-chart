@@ -37,6 +37,7 @@
     .valFormatter(ipFormatter)
     .rangeLabel(() => '')
     .rangeColor('color')
+    .rangePadding(0.025)
     .showValTooltip(false)
     .rangeTooltipContent(prefixFormatter)
     .onRangeClick(d => chart.focusOn(d.start, d.length, 3000))
