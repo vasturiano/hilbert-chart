@@ -316,7 +316,7 @@ export default Kapsule({
 
       // Hover detection based on interval tree
       if (state.useCanvas && (state.onRangeHover || state.showRangeTooltip)) {
-        const hoverDs = !state.rangeTree ? [] : state.rangeTree.search(val, val);
+        const hoverDs = !state.intervalTree ? [] : state.intervalTree.search(val, val);
         hoverDs.length > 1 && hoverDs.sort((a, b) => a.length - b.length); // prefer smaller cells
         const hoverD = hoverDs.length ? hoverDs[0] : null;
 
@@ -399,13 +399,6 @@ export default Kapsule({
   },
 
   update: function(state, changedProps) {
-    if (state.useCanvas && changedProps.hasOwnProperty('data')) {
-      const t0 = new Date();
-      // re-index interval tree when data changes for fast lookups
-      state.rangeTree = new IntervalTree();
-      (state.data || []).forEach(d => state.rangeTree.insert(d.start, d.start + d.length, d));
-    }
-
     const canvasWidth = state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
     const labelAcessor = accessorFn(state.rangeLabel);
     const labelColorAccessor = accessorFn(state.rangeLabelColor);
@@ -440,6 +433,13 @@ export default Kapsule({
     }
 
     state.useCanvas ? canvasUpdate() : svgUpdate();
+
+    if (state.useCanvas && changedProps.hasOwnProperty('data')) {
+      const t0 = new Date();
+      // re-index interval tree when data changes for fast lookups
+      state.intervalTree = new IntervalTree();
+      (state.data || []).forEach(d => state.intervalTree.insert(d.start, d.start + d.length, d));
+    }
 
     //
 
