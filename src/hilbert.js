@@ -10,7 +10,7 @@ import './canvas-textpath/ctxtextpath.js';
 import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
-import IntervalTree from 'node-interval-tree';
+import { IntervalTree } from 'node-interval-tree';
 import ScrollZoomClamp from 'scroll-zoom-clamp';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
@@ -316,8 +316,9 @@ export default Kapsule({
 
       // Hover detection based on interval tree
       if (state.useCanvas && (state.onRangeHover || state.showRangeTooltip)) {
-        const hoverDs = !state.intervalTree ? [] : state.intervalTree.search(val, val);
-        hoverDs.length > 1 && hoverDs.sort((a, b) => a.length - b.length); // prefer smaller cells
+        const hoverDs = !state.intervalTree ? [] : state.intervalTree.search(val, val)
+          .map(d => d.data)
+          .sort((a, b) => a.length - b.length); // prefer smaller cells
         const hoverD = hoverDs.length ? hoverDs[0] : null;
 
         if (hoverD !== state.hoverD) {
@@ -438,7 +439,11 @@ export default Kapsule({
       const t0 = new Date();
       // re-index interval tree when data changes for fast lookups
       state.intervalTree = new IntervalTree();
-      (state.data || []).forEach(d => state.intervalTree.insert(d.start, d.start + d.length, d));
+      (state.data || []).forEach(d => state.intervalTree.insert({
+        low: d.start,
+        high: d.start + d.length,
+        data: d
+      }));
     }
 
     //
