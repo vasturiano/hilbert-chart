@@ -10,12 +10,11 @@ import './canvas-textpath/ctxtextpath.js';
 import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
-import ColorTracker from 'canvas-color-tracker';
+import IntervalTree from 'node-interval-tree';
 import ScrollZoomClamp from 'scroll-zoom-clamp';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
 const MAX_OBJECTS_TO_ANIMATE_ZOOM = 90e3; // To prevent blocking interaction in canvas mode
-const MAX_OBJECTS_TO_ALWAYS_UPDATE_SHADOW_CANVAS = 9e3; // Threshold to update canvas color interaction during zooming
 
 export default Kapsule({
   props: {
@@ -171,15 +170,12 @@ export default Kapsule({
   },
 
   stateInit() {
-    const shadowCanvasEl = document.createElement('canvas');
     return {
       hilbert: d3Hilbert().simplifyCurves(true),
       defaultColorScale: d3ScaleOrdinal(d3SchemePaired),
       zoomBox: [[0, 0], [N_TICKS, N_TICKS]],
       axisScaleX: d3ScaleLinear().domain([0, N_TICKS]),
-      axisScaleY: d3ScaleLinear().domain([0, N_TICKS]),
-      shadowCanvasEl,
-      shadowCtx: shadowCanvasEl.getContext('2d', { willReadFrequently: true })
+      axisScaleY: d3ScaleLinear().domain([0, N_TICKS])
     };
   },
 
@@ -307,10 +303,22 @@ export default Kapsule({
     hilbertCanvas.on('mousemove', function(ev) {
       const coords = d3Pointer(ev);
 
-      // Hover detection based on shadow canvas
+      const c = coords.slice();
+      if (state.useCanvas) {
+        // Need to consider zoom on canvas
+        const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
+        c[0] -= zoomTransform.x;
+        c[0] /= zoomTransform.k;
+        c[1] -= zoomTransform.y;
+        c[1] /= zoomTransform.k;
+      }
+      const val = state.hilbert.getValAtXY(...c);
+
+      // Hover detection based on interval tree
       if (state.useCanvas && (state.onRangeHover || state.showRangeTooltip)) {
-        const pxScale = window.devicePixelRatio;
-        const hoverD = state.colorTracker.lookup(state.shadowCtx.getImageData(...coords.map(c => c * pxScale), 1, 1).data);
+        const hoverDs = !state.rangeTree ? [] : state.rangeTree.search(val, val);
+        hoverDs.length > 1 && hoverDs.sort((a, b) => a.length - b.length); // prefer smaller cells
+        const hoverD = hoverDs.length ? hoverDs[0] : null;
 
         if (hoverD !== state.hoverD) {
           state.hoverD = hoverD;
@@ -336,18 +344,6 @@ export default Kapsule({
       const pointerPos = { x: ev.pageX - offset.left, y: ev.pageY - offset.top };
 
       if (state.showValTooltip || state.onPointerMove) {
-        const c = coords.slice();
-        if (state.useCanvas) {
-          // Need to consider zoom on canvas
-          const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
-          c[0] -= zoomTransform.x;
-          c[0] /= zoomTransform.k;
-          c[1] -= zoomTransform.y;
-          c[1] /= zoomTransform.k;
-        }
-
-        const val = state.hilbert.getValAtXY(...c);
-
         state.showValTooltip && valTooltip.text(state.valFormatter(val))
           .style('left', `${pointerPos.x}px`)
           .style('top', `${pointerPos.y}px`);
@@ -402,7 +398,14 @@ export default Kapsule({
     }
   },
 
-  update: function(state) {
+  update: function(state, changedProps) {
+    if (state.useCanvas && changedProps.hasOwnProperty('data')) {
+      const t0 = new Date();
+      // re-index interval tree when data changes for fast lookups
+      state.rangeTree = new IntervalTree();
+      (state.data || []).forEach(d => state.rangeTree.insert(d.start, d.start + d.length, d));
+    }
+
     const canvasWidth = state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
     const labelAcessor = accessorFn(state.rangeLabel);
     const labelColorAccessor = accessorFn(state.rangeLabelColor);
@@ -585,7 +588,7 @@ export default Kapsule({
         .style('width', `${canvasWidth}px`)
         .style('height', `${canvasWidth}px`);
 
-      [state.hilbertCanvas.node(), state.shadowCanvasEl].forEach(canvasEl => {
+      [state.hilbertCanvas.node()].forEach(canvasEl => {
         // Memory size (scaled to avoid blurriness)
         canvasEl.width = state.canvasWidth * pxScale;
         canvasEl.height = state.canvasWidth * pxScale;
@@ -599,15 +602,11 @@ export default Kapsule({
       };
 
       const ctx = state.hilbertCanvas.node().getContext('2d');
-      const shadowCtx = state.shadowCtx;
+      ctx.clearRect(0, 0, canvasWidth, canvasWidth);
 
-      [ctx, shadowCtx].forEach(ctx => {
-        ctx.clearRect(0, 0, canvasWidth, canvasWidth);
-
-        // Apply zoom transform (respecting pxScale)
-        ctx.translate(zoomTransform.x * pxScale, zoomTransform.y * pxScale);
-        ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
-      });
+      // Apply zoom transform (respecting pxScale)
+      ctx.translate(zoomTransform.x * pxScale, zoomTransform.y * pxScale);
+      ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
 
       let dataInView = state.data.filter(d => {
         if (d.pathVertices.length) return true; // Can't judge multi-cell
@@ -641,15 +640,7 @@ export default Kapsule({
         dataInView = dataInView.filter((_, idx) => keepIdxs.has(idx));
       }
 
-      // indexed blocks for rgb lookup
-      const n = dataInView.length;
-      state.colorTracker = new ColorTracker(
-        n < 250e3 ? 6 : n < 500e3 ? 5 : n < 1e6 ? 4 : n < 2e6 ? 3 : n < 4e6 ? 2 : n < 8e6 ? 1 : 0
-      );
-
-      const updateShadowCanvas = !state.zooming || n < MAX_OBJECTS_TO_ALWAYS_UPDATE_SHADOW_CANVAS;
-
-      for (let i = 0; i < n ; i++) {
+      for (let i = 0, n = dataInView.length; i < n ; i++) {
         const d = dataInView[i];
 
         const w = d.cellWidth;
@@ -664,10 +655,6 @@ export default Kapsule({
 
           ctx.fillStyle = colorAccessor(d);
           const ctxs = [ctx];
-          if (updateShadowCanvas && scaledW >= 1) { // don't bother registering sub-pixel squares on shadow canvas, it kills performance
-            shadowCtx.fillStyle = state.colorTracker.register(d);
-            ctxs.push(shadowCtx);
-          }
           ctxs.forEach(ctx => ctx.fillRect(x + rectPadding, y + rectPadding, rectW, rectW));
 
           if (scaledW > 12) { // Hide labels on small square cells
@@ -697,10 +684,6 @@ export default Kapsule({
 
           ctx.strokeStyle = colorAccessor(d);
           const ctxs = [ctx];
-          if (updateShadowCanvas) {
-            shadowCtx.strokeStyle = state.colorTracker.register(d);
-            ctxs.push(shadowCtx);
-          }
           ctxs.forEach(ctx => {
             ctx.lineWidth = w * (1 - relPadding);
             ctx.lineCap = 'square';

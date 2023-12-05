@@ -42,7 +42,6 @@
   ],
   "dependencies": {
     "accessor-fn": "1",
-    "canvas-color-tracker": "1",
     "d3-axis": "1 - 3",
     "d3-hilbert": "^1.3",
     "d3-scale": "1 - 4",
@@ -53,6 +52,7 @@
     "gsap": "^3.12",
     "heatmap.js": "^2.0.5",
     "kapsule": "^1.14",
+    "node-interval-tree": "^2.1",
     "scroll-zoom-clamp": "1"
   },
   "devDependencies": {
