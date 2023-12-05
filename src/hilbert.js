@@ -570,17 +570,32 @@ export default Kapsule({
       //
 
       function getHilbertPath(vertices) {
-        let path = 'M0 0L0 0';
+        if (!vertices.every(v => v === 'L')) {
+          let path = 'M0 0L0 0';
 
-        vertices.forEach(function(vert) {
-          switch(vert) {
-            case 'U': path += 'v-1'; break;
-            case 'D': path += 'v1'; break;
-            case 'L': path += 'h-1'; break;
-            case 'R': path += 'h1'; break;
-          }
-        });
-        return path;
+          vertices.forEach(function(vert) {
+            switch(vert) {
+              case 'U': path += 'v-1'; break;
+              case 'D': path += 'v1'; break;
+              case 'L': path += 'h-1'; break;
+              case 'R': path += 'h1'; break;
+            }
+          });
+          return path;
+        } else { // reverse path (to prevent upside down text)
+          let path = '';
+
+          const lastPos = [0, 0];
+          vertices.slice().reverse().forEach(function(vert) {
+            switch(vert) {
+              case 'U': path += 'v1'; lastPos[1]-=1; break;
+              case 'D': path += 'v-1'; lastPos[1]+=1; break;
+              case 'L': path += 'h1'; lastPos[0]-=1; break;
+              case 'R': path += 'h-1'; lastPos[0]+=1; break;
+            }
+          });
+          return `M${lastPos.join(' ')}L${lastPos.join(' ')}${path}`;
+        }
       }
     }
 
@@ -718,7 +733,8 @@ export default Kapsule({
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.lineWidth = 0.01; // no stroke outline
-          ctx.textPath(name, [].concat(...path));
+          // flip text if upside down (left oriented paths)
+          ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path)));
         }
       }
     }
