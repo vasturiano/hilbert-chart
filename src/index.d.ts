@@ -33,6 +33,8 @@ export interface HilbertChartGenericInstance<ChainableInstance> {
   rangeColor(colorAccessor: RangeAccessor<string>): ChainableInstance;
   rangePadding(): RangeAccessor<string>;
   rangePadding(paddingAccessor: RangeAccessor<string>): ChainableInstance;
+  rangePaddingAbsolute(): RangeAccessor<string>;
+  rangePaddingAbsolute(paddingAccessor: RangeAccessor<string>): ChainableInstance;
   valFormatter(): NumFormatter;
   valFormatter(formatter: NumFormatter): ChainableInstance;
 

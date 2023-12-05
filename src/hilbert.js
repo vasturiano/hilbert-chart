@@ -26,6 +26,7 @@ export default Kapsule({
     rangeLabelColor: { default: () => 'black' },
     rangeColor: {},
     rangePadding: { default: 0 },
+    rangePaddingAbsolute: { default: 0 },
     valFormatter: { default: d => d },
     showValTooltip: { default: true, triggerUpdate: false },
     showRangeTooltip: { default: true, triggerUpdate: false },
@@ -406,6 +407,7 @@ export default Kapsule({
     const colorAccessor = state.rangeColor ? accessorFn(state.rangeColor) : (d => state.defaultColorScale(labelAcessor(d)));
     const _paddingAccessorFn = accessorFn(state.rangePadding);
     const paddingAccessor = d => Math.max(0, Math.min(1, _paddingAccessorFn(d))); // limit to [0, 1] range
+    const paddingAbsAccessor = accessorFn(state.rangePaddingAbsolute);
 
     state.hilbert
       .order(state.hilbertOrder)
@@ -528,7 +530,7 @@ export default Kapsule({
       rangePaths.selectAll('path') //.transition()
         .attr('d', d => getHilbertPath(d.pathVertices))
         .style('stroke', colorAccessor)
-        .style('stroke-width', d => 1 - paddingAccessor(d))
+        .style('stroke-width', d => Math.max(0, 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth))
         .style('cursor', state.onRangeClick ? 'pointer' : null);
 
       rangePaths
@@ -537,11 +539,11 @@ export default Kapsule({
       );
 
       rangePaths.selectAll('text')
-        .attr('font-size', d => Math.min(...[
+        .attr('font-size', d => Math.max(0, Math.min(...[
           0.25,                 // Max 25% of path height
-          (d.pathVertices.length + 1 - paddingAccessor(d)) * 0.25, // Max 25% path length
+          (d.pathVertices.length + 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth) * 0.25, // Max 25% path length
           canvasWidth / d.cellWidth * 0.03  // Max 3% of canvas size
-        ]))
+        ])))
         .attr('textLength', d => {
           let MAX_TEXT_EXPANSION;
 
@@ -552,7 +554,7 @@ export default Kapsule({
             return Math.min(d.pathVertices.length, name.length * MAX_TEXT_EXPANSION);
           } else {
             MAX_TEXT_EXPANSION = 0.15;
-            return Math.min(0.95 * (1 - paddingAccessor(d)), name.length * MAX_TEXT_EXPANSION);
+            return Math.max(0, Math.min(0.95 * (1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth), name.length * MAX_TEXT_EXPANSION));
           }
         })
         .filter(d => !d.pathVertices.length)
@@ -651,23 +653,24 @@ export default Kapsule({
         const w = d.cellWidth;
         const scaledW = w * zoomTransform.k;
         const relPadding = paddingAccessor(d);
+        const absPadding = paddingAbsAccessor(d);
+        const padding = Math.min(w * 0.5, (relPadding * w + absPadding) / zoomTransform.k);
 
         if (d.pathVertices.length === 0) { // single cell -> draw a square
           const [x, y] = d.startCell.map(c => c * w);
 
-          const rectPadding = relPadding * w / 2;
-          const rectW = w * (1 - relPadding);
+          const rectW = w - padding;
 
           ctx.fillStyle = colorAccessor(d);
           const ctxs = [ctx];
-          ctxs.forEach(ctx => ctx.fillRect(x + rectPadding, y + rectPadding, rectW, rectW));
+          ctxs.forEach(ctx => ctx.fillRect(x + padding / 2, y + padding / 2, rectW, rectW));
 
           if (scaledW > 12) { // Hide labels on small square cells
             const name = labelAcessor(d);
             const fontSize = Math.min(
               20,             // absolute
               scaledW * 0.25, // Max 25% of cell height
-              scaledW * (1 - relPadding) / name.length * 1.5 // Fit text length
+              (scaledW - padding) / name.length * 1.5 // Fit text length
             ) / zoomTransform.k;
             ctx.font = `${fontSize}px Sans-Serif`;
             ctx.fillStyle = labelColorAccessor(d);
@@ -690,7 +693,7 @@ export default Kapsule({
           ctx.strokeStyle = colorAccessor(d);
           const ctxs = [ctx];
           ctxs.forEach(ctx => {
-            ctx.lineWidth = w * (1 - relPadding);
+            ctx.lineWidth = w - padding;
             ctx.lineCap = 'square';
             ctx.beginPath();
             ctx.moveTo(...path[0]);
@@ -708,7 +711,7 @@ export default Kapsule({
           const fontSize = Math.min(
             20,            // absolute
             scaledW * 0.4, // Max 40% of cell height
-            scaledW * (path.length - relPadding) / name.length * 1.2 // Fit text length
+            (scaledW * path.length - padding) / name.length * 1.2 // Fit text length
           ) / zoomTransform.k;
           ctx.font = `${fontSize}px Sans-Serif`;
           ctx.fillStyle = labelColorAccessor(d);
