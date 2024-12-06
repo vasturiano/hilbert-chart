@@ -31,7 +31,7 @@
     });
   }
 
-  const chart = HilbertChart({ useCanvas: true })
+  const chart = new HilbertChart(document.getElementById('ipv4-chart'), { useCanvas: true })
     .hilbertOrder(32 / 2)
     .data(blockData)
     .valFormatter(ipFormatter)
@@ -40,8 +40,7 @@
     .rangePadding(0.025)
     .showValTooltip(false)
     .rangeTooltipContent(prefixFormatter)
-    .onRangeClick(d => chart.focusOn(d.start, d.length, 3000))
-    (document.getElementById('ipv4-chart'));
+    .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
 
   function ipFormatter(d) {
     return new Ip.Addr(d).toString();

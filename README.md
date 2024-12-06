@@ -20,19 +20,16 @@ or using a *script* tag
 ```
 then
 ```js
-const myChart = HilbertChart();
-
-myChart
+const myChart = new HilbertChart(<myDOMElement>)
   .hilbertOrder(<hilbertOrder>)
-  .data(<myData>)
-  (<myDOMElement>);
+  .data(<myData>);
 ```
 
 ## API reference
 
 ### Initialisation
 ```js
-HilbertChart({ configOptions })(<domElement>)
+new HilbertChart(<domElement>, { configOptions })
 ```
 
 | Config options | Description | Default |

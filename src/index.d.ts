@@ -12,52 +12,48 @@ export interface Range {
 
 type NumFormatter = (num: number) => string;
 
-export interface HilbertChartGenericInstance<ChainableInstance> {
-  (element: HTMLElement): ChainableInstance;
+declare class HilbertChart {
+  constructor(element: HTMLElement, configOptions?: ConfigOptions);
 
   width(): number;
-  width(width: number): ChainableInstance;
+  width(width: number): HilbertChart;
   margin(): number;
-  margin(px: number): ChainableInstance;
+  margin(px: number): HilbertChart;
 
   hilbertOrder(): number;
-  hilbertOrder(height: number): ChainableInstance;
+  hilbertOrder(height: number): HilbertChart;
 
   data(): Range[];
-  data(data: Range[]): ChainableInstance;
+  data(data: Range[]): HilbertChart;
   rangeLabel(): RangeAccessor<string>;
-  rangeLabel(textAccessor: RangeAccessor<string>): ChainableInstance;
+  rangeLabel(textAccessor: RangeAccessor<string>): HilbertChart;
   rangeLabelColor(): RangeAccessor<string>;
-  rangeLabelColor(colorAccessor: RangeAccessor<string>): ChainableInstance;
+  rangeLabelColor(colorAccessor: RangeAccessor<string>): HilbertChart;
   rangeColor(): RangeAccessor<string>;
-  rangeColor(colorAccessor: RangeAccessor<string>): ChainableInstance;
+  rangeColor(colorAccessor: RangeAccessor<string>): HilbertChart;
   rangePadding(): RangeAccessor<string>;
-  rangePadding(paddingAccessor: RangeAccessor<string>): ChainableInstance;
+  rangePadding(paddingAccessor: RangeAccessor<string>): HilbertChart;
   rangePaddingAbsolute(): RangeAccessor<string>;
-  rangePaddingAbsolute(paddingAccessor: RangeAccessor<string>): ChainableInstance;
+  rangePaddingAbsolute(paddingAccessor: RangeAccessor<string>): HilbertChart;
   valFormatter(): NumFormatter;
-  valFormatter(formatter: NumFormatter): ChainableInstance;
+  valFormatter(formatter: NumFormatter): HilbertChart;
 
-  focusOn(pos:number, length: number, ms?: number): ChainableInstance;
+  focusOn(pos:number, length: number, ms?: number): HilbertChart;
 
   showValTooltip(): boolean;
-  showValTooltip(show: boolean): ChainableInstance;
+  showValTooltip(show: boolean): HilbertChart;
   showRangeTooltip(): boolean;
-  showRangeTooltip(show: boolean): ChainableInstance;
+  showRangeTooltip(show: boolean): HilbertChart;
   rangeTooltipContent(): RangeAccessor<string>;
-  rangeTooltipContent(contentAccessor: RangeAccessor<string>): ChainableInstance;
+  rangeTooltipContent(contentAccessor: RangeAccessor<string>): HilbertChart;
   enableZoom(): boolean;
-  enableZoom(enable: boolean): ChainableInstance;
+  enableZoom(enable: boolean): HilbertChart;
 
-  onRangeClick(cb: (range: Range) => void): ChainableInstance;
-  onRangeHover(cb: (range: Range | null) => void): ChainableInstance;
-  onPointerMove(cb: (value: number, event: MouseEvent) => void): ChainableInstance;
-  onZoom(callback: (transform: {k: number, x: number, y: number}) => void): ChainableInstance;
-  onZoomEnd(callback: (transform: {k: number, x: number, y: number}) => void): ChainableInstance;
+  onRangeClick(cb: (range: Range) => void): HilbertChart;
+  onRangeHover(cb: (range: Range | null) => void): HilbertChart;
+  onPointerMove(cb: (value: number, event: MouseEvent) => void): HilbertChart;
+  onZoom(callback: (transform: {k: number, x: number, y: number}) => void): HilbertChart;
+  onZoomEnd(callback: (transform: {k: number, x: number, y: number}) => void): HilbertChart;
 }
-
-export type HilbertChartInstance = HilbertChartGenericInstance<HilbertChartInstance>;
-
-declare function HilbertChart(configOptions?: ConfigOptions): HilbertChartInstance;
 
 export default HilbertChart;

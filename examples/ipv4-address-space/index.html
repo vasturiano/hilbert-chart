@@ -25,13 +25,12 @@
         row.name = row.Designation;
       });
 
-      HilbertChart()
+      new HilbertChart(document.getElementById('ipv4-chart'))
         .hilbertOrder(32 / 2)
         .data(parseIpData(data))
         .rangePaddingAbsolute(1)
         .valFormatter(ipFormatter)
-        .rangeTooltipContent(d => `<b>${d.name}</b>: ${prefixFormatter(d)}`)
-        (document.getElementById('ipv4-chart'));
+        .rangeTooltipContent(d => `<b>${d.name}</b>: ${prefixFormatter(d)}`);
     });
 
     //

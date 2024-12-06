@@ -43,13 +43,12 @@
       return d;
     });
 
-    HilbertChart()
+    new HilbertChart(document.getElementById('chart'))
       .margin(40)
       .hilbertOrder(hilbertOrder)
       .data(hilbertData)
       .valFormatter(n => Math.round(n / hilbertLength * dataSum))
       .showValTooltip(false)
-      .rangeTooltipContent(({ name, val }) => `<b>${name}</b>: ${val} (${Math.round(val / dataSum * 100)}%)`)
-      (document.getElementById('chart'));
+      .rangeTooltipContent(({ name, val }) => `<b>${name}</b>: ${val} (${Math.round(val / dataSum * 100)}%)`);
   </script>
 </body>
