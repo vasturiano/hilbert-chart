@@ -1,8 +1,6 @@
 <head>
   <title>Hilbert IPv4 Address Map</title>
 
-  <script src='//unpkg.com/d3-dsv'></script>
-  <script src='//unpkg.com/ip.js'></script>
   <script src='//unpkg.com/hilbert-chart'></script>
 <!--  <script src='../../dist/hilbert-chart.js'></script>-->
 
@@ -17,9 +15,12 @@
 <body>
   <div id='ipv4-chart'></div>
 
-  <script>
+  <script type="module">
+    import * as Ip from 'https://esm.sh/ip.js';
+    import { csvParse } from 'https://esm.sh/d3-dsv';
+
     // Get the IPv4 data
-    fetch('./ipv4-address-space.csv').then(r => r.text()).then(d3.csvParse).then(data => {
+    fetch('./ipv4-address-space.csv').then(r => r.text()).then(csvParse).then(data => {
       data.forEach(row => {
         row.prefix = row.Prefix;
         row.name = row.Designation;

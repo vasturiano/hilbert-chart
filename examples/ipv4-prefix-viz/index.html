@@ -1,10 +1,8 @@
 <head>
   <title>Hilbert IPv4 Address Space Visualization</title>
 
-  <script src='//unpkg.com/ip.js'></script>
-
   <script src='//unpkg.com/hilbert-chart'></script>
-<!--    <script src='../../dist/hilbert-chart.js'></script>-->
+<!--  <script src='../../dist/hilbert-chart.js'></script>-->
 
   <style>
     body {
@@ -17,8 +15,8 @@
 <body>
 <div id='ipv4-chart'></div>
 
-<script>
-  const CIDR = 20;
+<script type="module">
+  import * as Ip from 'https://esm.sh/ip.js';  const CIDR = 20;
 
   const numBlocks = 2**CIDR;
   const blockLen = 2**(32-CIDR);
