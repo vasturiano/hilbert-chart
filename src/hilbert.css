@@ -33,19 +33,3 @@
   font: 11px sans-serif;
   pointer-events: none;
 }
-
-.hilbert-chart .hilbert-tooltip.val-tooltip {
-  display: none;
-  position: absolute;
-  width: max-content;
-  margin-top: 20px;
-  margin-left: -10px;
- }
-
-.hilbert-chart .hilbert-tooltip.range-tooltip {
-  display: none;
-  position: absolute;
-  width: max-content;
-  margin-top: -12px;
-  transform: translate(-50%, -100%);
-}

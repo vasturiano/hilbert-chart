@@ -10,6 +10,7 @@ import './canvas-textpath/ctxtextpath.js';
 import heatmap from 'heatmap.js';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
+import Tooltip from 'float-tooltip';
 import { IntervalTree } from 'node-interval-tree';
 import ScrollZoomClamp from 'scroll-zoom-clamp';
 
@@ -282,19 +283,11 @@ export default Kapsule({
       state.zoom.__baseElem = hilbertCanvas; // Attach controlling elem for easy access
     }
 
-    // Range Tooltip
-    const rangeTooltip = state.rangeTooltip = d3El.append('div')
-      .attr('class', 'hilbert-tooltip range-tooltip');
+    // Tooltips
+    state.rangeTooltip = new Tooltip(d3El).offsetX(0).offsetY(-12);
+    const valTooltip = new Tooltip(d3El).offsetX('-10px').offsetY(20);
 
-    // Value Tooltip
-    const valTooltip = d3El.append('div')
-      .attr('class', 'hilbert-tooltip val-tooltip');
-
-    hilbertCanvas.on('mouseover', () => state.showValTooltip && valTooltip.style('display', 'inline'));
     hilbertCanvas.on('mouseout', () => {
-      valTooltip.style('display', 'none');
-      rangeTooltip.style('display', 'none');
-
       if (state.useCanvas && state.hoverD) {
         state.hoverD = null;
         state.onRangeHover && state.onRangeHover(null);
@@ -325,7 +318,6 @@ export default Kapsule({
         if (hoverD !== state.hoverD) {
           state.hoverD = hoverD;
 
-          state.rangeTooltip.style('display', 'none');
           if (hoverD && state.showRangeTooltip) {
             const d = hoverD;
             const tooltipContent = state.rangeTooltipContent
@@ -333,8 +325,9 @@ export default Kapsule({
               // default tooltip
               : `<b>${accessorFn(state.rangeLabel)(d)}</b>: ${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
 
-            state.rangeTooltip.html(tooltipContent || '');
-            tooltipContent && state.rangeTooltip.style('display', 'inline');
+            state.rangeTooltip.content(tooltipContent);
+          } else {
+            state.rangeTooltip.content(false);
           }
 
           hilbertCanvas.style('cursor', hoverD && state.onRangeClick ? 'pointer' : null);
@@ -342,27 +335,10 @@ export default Kapsule({
         }
       }
 
-      const offset = getOffset(d3El.node());
-      const pointerPos = { x: ev.pageX - offset.left, y: ev.pageY - offset.top };
-
       if (state.showValTooltip || state.onPointerMove) {
-        state.showValTooltip && valTooltip.text(state.valFormatter(val))
-          .style('left', `${pointerPos.x}px`)
-          .style('top', `${pointerPos.y}px`);
+        state.showValTooltip && valTooltip.content(state.valFormatter(val));
 
         state.onPointerMove && state.onPointerMove(val, ev);
-      }
-      if (state.showRangeTooltip) {
-        rangeTooltip
-          .style('left', `${pointerPos.x}px`)
-          .style('top', `${pointerPos.y}px`);
-      }
-
-      function getOffset(el) {
-        const rect = el.getBoundingClientRect(),
-          scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
-          scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        return { top: rect.top + scrollTop, left: rect.left + scrollLeft };
       }
     });
 
@@ -474,22 +450,20 @@ export default Kapsule({
         .attr('fill', labelColorAccessor)
         .on('click', (ev, d) => state.onRangeClick && state.onRangeClick(d))
         .on('mouseover', (ev, d) => {
-          state.rangeTooltip.style('display', 'none');
-
           if (state.showRangeTooltip) {
             const tooltipContent = state.rangeTooltipContent
               ? accessorFn(state.rangeTooltipContent)(d)
               // default tooltip
               : `<b>${accessorFn(state.rangeLabel)(d)}</b>: ${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
 
-            state.rangeTooltip.html(tooltipContent || '');
-            tooltipContent && state.rangeTooltip.style('display', 'inline');
+            state.rangeTooltip.content(tooltipContent);
+          } else {
+            state.rangeTooltip.content(false);
           }
 
           state.onRangeHover && state.onRangeHover(d);
         })
         .on('mouseout', () => {
-          state.rangeTooltip.style('display', 'none');
           state.onRangeHover && state.onRangeHover(null);
         });
 
