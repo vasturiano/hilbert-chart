@@ -16,7 +16,7 @@ import HilbertChart from 'hilbert-chart';
 ```
 or using a *script* tag
 ```html
-<script src="//unpkg.com/hilbert-chart"></script>
+<script src="//cdn.jsdelivr.net/npm/hilbert-chart"></script>
 ```
 then
 ```js
