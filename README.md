@@ -62,6 +62,12 @@ new HilbertChart(<domElement>, { configOptions })
 | <b>onZoom</b>(<i>fn</i>) | Callback function for zoom/pan events. The current zoom transform is included as single argument `onZoom({ k, x, y })`. Note that `onZoom` is triggered by user interaction as well as programmatic zooming/panning with `focusOn()`. | - |
 | <b>onZoomEnd</b>(<i>fn</i>) | Callback function for 'end' of zoom/pan events. The current zoom transform is included as single argument `onZoomEnd({ k, x, y })`. Note that `onZoomEnd` is triggered by user interaction as well as programmatic zooming/panning with `focusOn()`. | - |
 
+## ❤️ Support This Project
+
+If you find this module useful and would like to support its development, you can [buy me a ☕](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=L398E7PKP47E8&currency_code=USD&source=url). Your contributions help keep open-source sustainable!
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=L398E7PKP47E8&currency_code=USD&source=url)
+
+
 [npm-img]: https://img.shields.io/npm/v/hilbert-chart
 [npm-url]: https://npmjs.org/package/hilbert-chart
 [build-size-img]: https://img.shields.io/bundlephobia/minzip/hilbert-chart
