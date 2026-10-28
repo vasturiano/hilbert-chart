@@ -1,0 +1,35 @@
+<head>
+  <script src='//cdn.jsdelivr.net/npm/hilbert-chart'></script>
+<!--  <script src='../../dist/hilbert-chart.js'></script>-->
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+    }
+
+    #chart { display: inline-block; }
+  </style>
+</head>
+<body>
+  <div id='chart'></div>
+
+  <script>
+    const hilbertOrder = 7;
+    const hilbertLength = Math.pow(4, hilbertOrder);
+
+    const hilbertLineData = [{ start: 0, length: hilbertLength }];
+
+    // Gen random data points
+    const nPnts = Math.round(Math.sqrt(hilbertLength) * 30);
+    const pnts = [...Array(nPnts)].map(() => (Math.round(Math.random() * hilbertLength)));
+
+    new HilbertChart(document.getElementById('chart'))
+      .hilbertOrder(hilbertOrder)
+      .data(hilbertLineData)
+      .simplifyCurves(false)
+      .rangePadding(0.25)
+      .showRangeTooltip(false)
+      .heatmapPoints(pnts);
+  </script>
+</body>
