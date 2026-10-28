@@ -25,6 +25,10 @@ declare class HilbertChart {
 
   data(): Range[];
   data(data: Range[]): HilbertChart;
+  heatmapPoints(): number[];
+  heatmapPoints(pnts: number[]): HilbertChart;
+  heatmapPointRadius(): number;
+  heatmapPointRadius(radius: number): HilbertChart;
   rangeLabel(): RangeAccessor<string>;
   rangeLabel(textAccessor: RangeAccessor<string>): HilbertChart;
   rangeLabelColor(): RangeAccessor<string>;

@@ -7,7 +7,7 @@ import d3Hilbert from 'd3-hilbert';
 import d3Tip from 'd3-tip';
 import gsap from 'gsap';
 import './canvas-textpath/ctxtextpath.js';
-import heatmap from 'heatmap.js';
+import Heatmap from 'heatmap2d';
 import Kapsule from 'kapsule';
 import accessorFn from 'accessor-fn';
 import Tooltip from 'float-tooltip';
@@ -23,6 +23,8 @@ export default Kapsule({
     margin: { default: 90 },
     hilbertOrder: { default: 4 }, // 0-255 default
     data: { default: [] },
+    heatmapPoints: { default: [] },
+    heatmapPointRadius: { default: 20 },
     rangeLabel: { default: 'name' },
     rangeLabelColor: { default: () => 'black' },
     rangeColor: {},
@@ -109,37 +111,6 @@ export default Kapsule({
 
       return this;
     },
-    addHeatmap(pnts) {
-      if (state.useCanvas) return this; // not supported in canvas mode
-
-      const hmData = pnts.map(pnt => {
-        const hPnt = { start: pnt, length: 1 };
-        state.hilbert.layout(hPnt);
-        return {
-          x: Math.round(hPnt.startCell[0] * hPnt.cellWidth),
-          y: Math.round(hPnt.startCell[1] * hPnt.cellWidth),
-          value: 1
-        };
-      });
-
-      const svgBox = state.svg.node().getBoundingClientRect();
-      const hmElem = d3Select(state.nodeElem).append('div')
-        .attr('class', 'hilbert-heatmap')
-        .style('top', (svgBox.top + state.margin) + 'px')
-        .style('left', (svgBox.left + state.margin) + 'px')
-        .append('div')
-          .style('width', state.canvasWidth + 'px')
-          .style('height', state.canvasWidth + 'px');
-
-      heatmap.create({
-        container: hmElem.node()
-      }).setData({
-        max: 100,
-        data: hmData
-      });
-
-      return this;
-    },
     _refreshAxises(state) {
       // Adjust axises
       const axises = state.axises;
@@ -177,7 +148,8 @@ export default Kapsule({
       defaultColorScale: d3ScaleOrdinal(d3SchemePaired),
       zoomBox: [[0, 0], [N_TICKS, N_TICKS]],
       axisScaleX: d3ScaleLinear().domain([0, N_TICKS]),
-      axisScaleY: d3ScaleLinear().domain([0, N_TICKS])
+      axisScaleY: d3ScaleLinear().domain([0, N_TICKS]),
+      heatmapCoordData: []
     };
   },
 
@@ -222,6 +194,9 @@ export default Kapsule({
           state.skipRelayout = true;
           requestAnimationFrame(state._rerender);
         }
+
+        // Apply transform to heatmap
+        state.heatmap.data(state.heatmapCoordData.map(pnt => zoomTransform.apply(pnt)));
 
         state.onZoom && state.onZoom({ ...zoomTransform });
       })
@@ -282,6 +257,15 @@ export default Kapsule({
       hilbertCanvas.call(state.zoom).on("dblclick.zoom", null);
       state.zoom.__baseElem = hilbertCanvas; // Attach controlling elem for easy access
     }
+
+    // Heatmap overlay
+    state.heatmapContainer = d3Create('div')
+      .style('position', 'absolute')
+      .style('top', `${state.margin}px`)
+      .style('left', `${state.margin}px`)
+      .style('pointer-events', 'none');
+    d3El.node().appendChild(state.heatmapContainer.node());
+    state.heatmap = new Heatmap(state.heatmapContainer.node());
 
     // Tooltips
     state.rangeTooltip = new Tooltip(d3El).offsetX(0).offsetY(-12);
@@ -423,6 +407,10 @@ export default Kapsule({
         data: d
       }));
     }
+
+    state.heatmapContainer.style('top', `${state.margin}px`).style('left', `${state.margin}px`);
+    state.heatmap.width(canvasWidth).height(canvasWidth).blurRadius(state.heatmapPointRadius);
+    changedProps.hasOwnProperty('heatmapPoints') && heatmapUpdate();
 
     //
 
@@ -711,6 +699,20 @@ export default Kapsule({
           ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path)));
         }
       }
+    }
+
+    function heatmapUpdate() {
+      state.heatmapCoordData = state.heatmapPoints.map(pnt => {
+        const hPnt = { start: pnt, length: 1 };
+        state.hilbert.layout(hPnt);
+        return [
+          Math.round(hPnt.startCell[0] * hPnt.cellWidth), // x
+          Math.round(hPnt.startCell[1] * hPnt.cellWidth)  // y
+        ];
+      });
+
+      const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
+      state.heatmap.data(state.heatmapCoordData.map(pnt => zoomTransform.apply(pnt)));
     }
   }
 });
