@@ -43,6 +43,8 @@ declare class HilbertChart {
   rangePaddingAbsolute(paddingAccessor: RangeAccessor<string>): HilbertChart;
   valFormatter(): NumFormatter;
   valFormatter(formatter: NumFormatter): HilbertChart;
+  simplifyCurves(): boolean;
+  simplifyCurves(simplifyCurves: boolean): HilbertChart;
 
   focusOn(pos:number, length: number, ms?: number): HilbertChart;
 

@@ -31,6 +31,7 @@ export default Kapsule({
     rangeColor: {},
     rangePadding: { default: 0 },
     rangePaddingAbsolute: { default: 0 },
+    simplifyCurves: { default: true },
     valFormatter: { default: d => d },
     showValTooltip: { default: true, triggerUpdate: false },
     showRangeTooltip: { default: true, triggerUpdate: false },
@@ -145,7 +146,7 @@ export default Kapsule({
 
   stateInit() {
     return {
-      hilbert: d3Hilbert().simplifyCurves(true),
+      hilbert: d3Hilbert(),
       defaultColorScale: d3ScaleOrdinal(d3SchemePaired),
       zoomBox: [[0, 0], [N_TICKS, N_TICKS]],
       axisScaleX: d3ScaleLinear().domain([0, N_TICKS]),
@@ -372,7 +373,8 @@ export default Kapsule({
 
     state.hilbert
       .order(state.hilbertOrder)
-      .canvasWidth(canvasWidth);
+      .canvasWidth(canvasWidth)
+      .simplifyCurves(state.simplifyCurves);
 
     // resizing
     state.svg
