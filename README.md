@@ -9,7 +9,7 @@ Hilbert Chart
 A hilbert space-filling curve chart for representing one-dimensional lengths on a two-dimensional space. 
 
 <p align="center">
-   <a href="https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/"><img width="75%" src="https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/preview.png"></a>
+   <a href="https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/"><img width="80%" src="https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/preview.png"></a>
 </p>
 
 
