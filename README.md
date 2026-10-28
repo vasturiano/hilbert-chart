@@ -6,7 +6,9 @@ Hilbert Chart
 [![NPM Downloads][npm-downloads-img]][npm-downloads-url]
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=L398E7PKP47E8&currency_code=USD&source=url)
 
-A hilbert space-filling curve chart for representing one-dimensional lengths on a two-dimensional space. Also features a heatmap layer for representing a set of single points.
+A hilbert space-filling curve chart for representing one-dimensional lengths on a two-dimensional space. Optional rendering to Canvas to handle very large datasets. Also features a heatmap layer for representing a set of single points.
+
+Uses [d3-hilbert](https://github.com/vasturiano/d3-hilbert) for the layout computation.
 
 ## Examples
 
