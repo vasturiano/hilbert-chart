@@ -719,8 +719,8 @@ export default Kapsule({
         const hPnt = { start: pnt, length: 1 };
         state.hilbert.layout(hPnt);
         return [
-          Math.round(hPnt.startCell[0] * hPnt.cellWidth), // x
-          Math.round(hPnt.startCell[1] * hPnt.cellWidth)  // y
+          Math.round((hPnt.startCell[0] + 0.5) * hPnt.cellWidth), // x
+          Math.round((hPnt.startCell[1] + 0.5) * hPnt.cellWidth)  // y
         ];
       });
 
