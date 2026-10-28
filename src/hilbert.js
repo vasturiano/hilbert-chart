@@ -715,14 +715,12 @@ export default Kapsule({
     }
 
     function heatmapUpdate() {
-      state.heatmapCoordData = state.heatmapPoints.map(pnt => {
-        const hPnt = { start: pnt, length: 1 };
-        state.hilbert.layout(hPnt);
-        return [
-          Math.round((hPnt.startCell[0] + 0.5) * hPnt.cellWidth), // x
-          Math.round((hPnt.startCell[1] + 0.5) * hPnt.cellWidth)  // y
-        ];
-      });
+      const cellWidth = state.canvasWidth / Math.pow(2, state.hilbertOrder);
+
+      state.heatmapCoordData = state.heatmapPoints
+        .map(state.hilbert.getXyAtVal)
+        .filter(cells => !!cells) // exclude null points
+        .map(cells => cells.map(c => Math.round((c + 0.5) * cellWidth))); // [x, y]
 
       const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
       state.heatmap.data(state.heatmapCoordData.map(pnt => zoomTransform.apply(pnt)));
