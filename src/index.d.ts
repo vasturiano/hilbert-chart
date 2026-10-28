@@ -29,6 +29,8 @@ declare class HilbertChart {
   heatmapPoints(pnts: number[]): HilbertChart;
   heatmapPointRadius(): number;
   heatmapPointRadius(radius: number): HilbertChart;
+  heatmapOpacity(): number;
+  heatmapOpacity(opacity: number): HilbertChart;
   rangeLabel(): RangeAccessor<string>;
   rangeLabel(textAccessor: RangeAccessor<string>): HilbertChart;
   rangeLabelColor(): RangeAccessor<string>;

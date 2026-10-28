@@ -25,6 +25,7 @@ export default Kapsule({
     data: { default: [] },
     heatmapPoints: { default: [] },
     heatmapPointRadius: { default: 20 },
+    heatmapOpacity: { default: 0.8 },
     rangeLabel: { default: 'name' },
     rangeLabelColor: { default: () => 'black' },
     rangeColor: {},
@@ -409,7 +410,11 @@ export default Kapsule({
     }
 
     state.heatmapContainer.style('top', `${state.margin}px`).style('left', `${state.margin}px`);
-    state.heatmap.width(canvasWidth).height(canvasWidth).blurRadius(state.heatmapPointRadius);
+    state.heatmap
+      .width(canvasWidth)
+      .height(canvasWidth)
+      .blurRadius(state.heatmapPointRadius)
+      .opacity(state.heatmapOpacity);
     changedProps.hasOwnProperty('heatmapPoints') && heatmapUpdate();
 
     //
