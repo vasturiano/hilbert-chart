@@ -5,7 +5,7 @@ Hilbert Chart
 [![Build Size][build-size-img]][build-size-url]
 [![NPM Downloads][npm-downloads-img]][npm-downloads-url]
 
-A hilbert space-filling curve chart for representing one-dimensional lengths on a two-dimensional space.
+A hilbert space-filling curve chart for representing one-dimensional lengths on a two-dimensional space. Also features a heatmap layer for representing a set of single points.
 
 Live example at: https://observablehq.com/@vasturiano/hilbert-map-of-ipv4-address-space
 
