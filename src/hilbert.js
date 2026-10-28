@@ -306,10 +306,11 @@ export default Kapsule({
 
           if (hoverD && state.showRangeTooltip) {
             const d = hoverD;
+            const label = accessorFn(state.rangeLabel)(d);
             const tooltipContent = state.rangeTooltipContent
               ? accessorFn(state.rangeTooltipContent)(d)
               // default tooltip
-              : `<b>${accessorFn(state.rangeLabel)(d)}</b>: ${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
+              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
 
             state.rangeTooltip.content(tooltipContent);
           } else {
@@ -366,7 +367,7 @@ export default Kapsule({
     const canvasWidth = state.canvasWidth = state.width || Math.min(window.innerWidth, window.innerHeight) - state.margin * 2;
     const labelAcessor = accessorFn(state.rangeLabel);
     const labelColorAccessor = accessorFn(state.rangeLabelColor);
-    const colorAccessor = state.rangeColor ? accessorFn(state.rangeColor) : (d => state.defaultColorScale(labelAcessor(d)));
+    const colorAccessor = state.rangeColor ? accessorFn(state.rangeColor) : (d => state.defaultColorScale(labelAcessor(d) || ''));
     const _paddingAccessorFn = accessorFn(state.rangePadding);
     const paddingAccessor = d => Math.max(0, Math.min(1, _paddingAccessorFn(d))); // limit to [0, 1] range
     const paddingAbsAccessor = accessorFn(state.rangePaddingAbsolute);
@@ -446,10 +447,11 @@ export default Kapsule({
         .on('click', (ev, d) => state.onRangeClick && state.onRangeClick(d))
         .on('mouseover', (ev, d) => {
           if (state.showRangeTooltip) {
+            const label = accessorFn(state.rangeLabel)(d);
             const tooltipContent = state.rangeTooltipContent
               ? accessorFn(state.rangeTooltipContent)(d)
               // default tooltip
-              : `<b>${accessorFn(state.rangeLabel)(d)}</b>: ${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
+              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
 
             state.rangeTooltip.content(tooltipContent);
           } else {
@@ -478,13 +480,13 @@ export default Kapsule({
           })
           .text(d => {
             const MAX_TEXT_COMPRESSION = 8;
-            const name = labelAcessor(d);
+            const name = labelAcessor(d) || '';
 
             return (!d.pathVertices.length || name.length / (d.pathVertices.length + 1) > MAX_TEXT_COMPRESSION) ? '' : name;
           })
           .attr('textLength', d => {
             const MAX_TEXT_EXPANSION = 0.4;
-            return Math.min(d.pathVertices.length, labelAcessor(d).length * MAX_TEXT_EXPANSION);
+            return Math.min(d.pathVertices.length, (labelAcessor(d) || '').length * MAX_TEXT_EXPANSION);
           })
           .attr('startOffset', function (d) {
             if (!d.pathVertices.length) return '0';
@@ -516,7 +518,7 @@ export default Kapsule({
         .attr('textLength', d => {
           let MAX_TEXT_EXPANSION;
 
-          const name = labelAcessor(d);
+          const name = labelAcessor(d) || '';
           if (d.pathVertices.length) {
             // Include it on text element for Firefox support
             MAX_TEXT_EXPANSION = 0.4;
@@ -531,7 +533,7 @@ export default Kapsule({
         .text(d => {
           const MAX_TEXT_COMPRESSION = 10;
 
-          const name = labelAcessor(d);
+          const name = labelAcessor(d) || '';
           return (name.length > MAX_TEXT_COMPRESSION) ? '' : name;
         })
         .attr('text-anchor', 'middle');
@@ -651,16 +653,18 @@ export default Kapsule({
 
           if (scaledW > 12) { // Hide labels on small square cells
             const name = labelAcessor(d);
-            const fontSize = Math.min(
-              20,             // absolute
-              scaledW * 0.25, // Max 25% of cell height
-              (scaledW - padding) / name.length * 1.5 // Fit text length
-            ) / zoomTransform.k;
-            ctx.font = `${fontSize}px Sans-Serif`;
-            ctx.fillStyle = labelColorAccessor(d);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(name, ...[x, y].map(c => c + w / 2));
+            if (name) {
+              const fontSize = Math.min(
+                20,             // absolute
+                scaledW * 0.25, // Max 25% of cell height
+                (scaledW - padding) / name.length * 1.5 // Fit text length
+              ) / zoomTransform.k;
+              ctx.font = `${fontSize}px Sans-Serif`;
+              ctx.fillStyle = labelColorAccessor(d);
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(name, ...[x, y].map(c => c + w / 2));
+            }
           }
         } else { // draw path (with textpath labels)
           let [x, y] = d.startCell.map(c => c * w + w / 2);
@@ -692,18 +696,20 @@ export default Kapsule({
           path[path.length - 1] = pathEnd;
 
           const name = labelAcessor(d);
-          const fontSize = Math.min(
-            20,            // absolute
-            scaledW * 0.4, // Max 40% of cell height
-            (scaledW * path.length - padding) / name.length * 1.2 // Fit text length
-          ) / zoomTransform.k;
-          ctx.font = `${fontSize}px Sans-Serif`;
-          ctx.fillStyle = labelColorAccessor(d);
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.lineWidth = 0.01; // no stroke outline
-          // flip text if upside down (left oriented paths)
-          ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path)));
+          if (name) {
+            const fontSize = Math.min(
+              20,            // absolute
+              scaledW * 0.4, // Max 40% of cell height
+              (scaledW * path.length - padding) / name.length * 1.2 // Fit text length
+            ) / zoomTransform.k;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.fillStyle = labelColorAccessor(d);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 0.01; // no stroke outline
+            // flip text if upside down (left oriented paths)
+            ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path)));
+          }
         }
       }
     }
