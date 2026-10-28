@@ -8,9 +8,12 @@ Hilbert Chart
 
 A hilbert space-filling curve chart for representing one-dimensional lengths on a two-dimensional space. 
 
-[![](https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/preview.png)](https://vasturiano.github.io/heatmap2d/ipv4-address-space/basic/)
+<p align="center">
+   <a href="https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/"><img width="75%" src="https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/preview.png"></a>
+</p>
 
-Supports optional rendering to Canvas to handle very large datasets, and features a [heatmap layer](https://vasturiano.github.io/hilbert-chart/examples/heatmap/) for representing a set of single points.
+
+Supports optional rendering on Canvas to handle very large datasets, and features a [heatmap layer](https://vasturiano.github.io/hilbert-chart/examples/heatmap/) for representing a set of single points.
 
 Uses [d3-hilbert](https://github.com/vasturiano/d3-hilbert) for the layout computation.
 
