@@ -16,8 +16,9 @@
 <div id='ipv4-chart'></div>
 
 <script type="module">
-  import * as Ip from 'https://esm.sh/ip.js';  const CIDR = 20;
+  import * as Ip from 'https://esm.sh/ip.js';
 
+  const CIDR = 20;
   const numBlocks = 2**CIDR;
   const blockLen = 2**(32-CIDR);
   const blockData = [];
