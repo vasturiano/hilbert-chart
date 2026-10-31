@@ -190,6 +190,14 @@ export default Kapsule({
         // Apply transform to chart
         if (!useCanvas) { // svg
           state.hilbertCanvas.attr('transform', zoomTransform);
+
+          // Adjust cells abs padding
+          const _paddingAccessorFn = accessorFn(state.rangePadding);
+          const paddingAccessor = d => Math.max(0, Math.min(1, _paddingAccessorFn(d))); // limit to [0, 1] range
+          const paddingAbsAccessor = accessorFn(state.rangePaddingAbsolute);
+          state.svg.selectAll('.hilbert-segment > path')
+            .style('stroke-width', d => Math.max(0, 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth / zoomTransform.k))
+
           this._refreshAxises();
         } else { // canvas
           // reapply zoom transform on rerender (without recalculating layout)
@@ -423,6 +431,8 @@ export default Kapsule({
     //
 
     function svgUpdate() {
+      const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
+
       // chart resizing
       state.zoomCanvas.attr('transform', `translate(${state.margin}, ${state.margin})`);
 
@@ -501,7 +511,7 @@ export default Kapsule({
       rangePaths.selectAll('path') //.transition()
         .attr('d', d => getHilbertPath(d.pathVertices))
         .style('stroke', colorAccessor)
-        .style('stroke-width', d => Math.max(0, 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth))
+        .style('stroke-width', d => Math.max(0, 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth / zoomTransform.k ))
         .style('cursor', state.onRangeClick ? 'pointer' : null);
 
       rangePaths
