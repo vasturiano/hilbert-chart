@@ -720,7 +720,7 @@ export default Kapsule({
       state.heatmapCoordData = state.heatmapPoints
         .map(state.hilbert.getXyAtVal)
         .filter(cells => !!cells) // exclude null points
-        .map(cells => cells.map(c => Math.round((c + 0.5) * cellWidth))); // [x, y]
+        .map(cells => cells.map(c => (c + 0.5) * cellWidth)); // [x, y]
 
       const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
       state.heatmap.data(state.heatmapCoordData.map(pnt => zoomTransform.apply(pnt)));
