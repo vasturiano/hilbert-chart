@@ -685,7 +685,7 @@ export default Kapsule({
           const ctxs = [ctx];
           ctxs.forEach(ctx => ctx.fillRect(x + padding / 2, y + padding / 2, rectW, rectW));
 
-          if (scaledW > 12) { // Hide labels on small square cells
+          if (scaledW > 24) { // Hide labels on small square cells
             const name = labelAcessor(d);
             if (name) {
               const fontSize = Math.min(
@@ -723,26 +723,28 @@ export default Kapsule({
             ctx.stroke();
           });
 
-          // extend path extremities to cell edges for textpath
-          const pathStart = path[0].map((c, idx) => c - (path[1][idx] - c) / 2);
-          const pathEnd = path[path.length - 1].map((c, idx) => c - (path[path.length - 2][idx] - c) / 2);
-          path[0] = pathStart;
-          path[path.length - 1] = pathEnd;
+          if (scaledW > 6 && (scaledW * path.length) > 24) {
+              // extend path extremities to cell edges for textpath
+            const pathStart = path[0].map((c, idx) => c - (path[1][idx] - c) / 2);
+            const pathEnd = path[path.length - 1].map((c, idx) => c - (path[path.length - 2][idx] - c) / 2);
+            path[0] = pathStart;
+            path[path.length - 1] = pathEnd;
 
-          const name = labelAcessor(d);
-          if (name) {
-            const fontSize = Math.min(
-              20,            // absolute
-              scaledW * 0.4, // Max 40% of cell height
-              (scaledW * path.length - padding) / name.length * 1.2 // Fit text length
-            ) / zoomTransform.k;
-            ctx.font = `${fontSize}px Sans-Serif`;
-            ctx.fillStyle = labelColorAccessor(d);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.lineWidth = 0.01; // no stroke outline
-            // flip text if upside down (left oriented paths)
-            ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path)));
+            const name = labelAcessor(d);
+            if (name) {
+              const fontSize = Math.min(
+                20,            // absolute
+                scaledW * 0.4, // Max 40% of cell height
+                (scaledW * path.length - padding) / name.length * 1.2 // Fit text length
+              ) / zoomTransform.k;
+              ctx.font = `${fontSize}px Sans-Serif`;
+              ctx.fillStyle = labelColorAccessor(d);
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.lineWidth = 0.01; // no stroke outline
+              // flip text if upside down (left oriented paths)
+              ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path)));
+            }
           }
         }
       }
