@@ -19,6 +19,7 @@ Uses [d3-hilbert](https://github.com/vasturiano/d3-hilbert) for the layout compu
 ## Examples
 
 * [IPv4 Address Space](https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/ipv4-address-space/index.html))
+* [BGP Routing Table](https://vasturiano.github.io/hilbert-chart/examples/bgp-announced-space-ipv4/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/bgp-announced-space-ipv4/index.html))
 * [IPv4 prefixes (~1M using canvas)](https://vasturiano.github.io/hilbert-chart/examples/ipv4-prefix-viz/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/ipv4-prefix-viz/index.html))
 * [Ordinal (square pie chart)](https://vasturiano.github.io/hilbert-chart/examples/ordinal/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/ordinal/index.html))
 * [Heatmap](https://vasturiano.github.io/hilbert-chart/examples/heatmap/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/heatmap/index.html))
