@@ -45,6 +45,8 @@ declare class HilbertChart {
   valFormatter(formatter: NumFormatter): HilbertChart;
   simplifyCurves(): boolean;
   simplifyCurves(simplifyCurves: boolean): HilbertChart;
+  minCurveWidth(): number;
+  minCurveWidth(minCurveWidth: number): HilbertChart;
 
   focusOn(pos:number, length: number, ms?: number): HilbertChart;
 

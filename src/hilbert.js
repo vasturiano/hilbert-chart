@@ -32,6 +32,7 @@ export default Kapsule({
     rangePadding: { default: 0 },
     rangePaddingAbsolute: { default: 0 },
     simplifyCurves: { default: true },
+    minCurveWidth: { default: 1 },
     valFormatter: { default: d => d },
     showValTooltip: { default: true, triggerUpdate: false },
     showRangeTooltip: { default: true, triggerUpdate: false },
@@ -400,7 +401,7 @@ export default Kapsule({
 
     this._refreshAxises();
 
-    if (!state.skipRelayout) {
+    if (!state.skipRelayout || changedProps.hasOwnProperty('data')) {
       // compute layout
       state.data.forEach(state.hilbert.layout);
     } else {
@@ -611,13 +612,36 @@ export default Kapsule({
       ctx.translate(zoomTransform.x * pxScale, zoomTransform.y * pxScale);
       ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
 
+      const minCellWidth = state.minCurveWidth / zoomTransform.k;
+      function cellInView(cellCoords, cellWidth) {
+        const w = cellWidth;
+        const x = cellCoords[0] * w;
+        if (x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x) return false;
+        const y = cellCoords[1] * w;
+        return !(y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y);
+      }
       let dataInView = state.data.filter(d => {
-        if (d.pathVertices.length) return true; // Can't judge multi-cell
-
         const w = d.cellWidth;
-        const [x, y] = d.startCell.map(c => c * w);
+        if (w < minCellWidth) return false; // Exclude ranges with cells that are too small
+
         // cell out of view, no need to draw
-        return !(x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x || y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y);
+        if (!d.pathVertices.length) return cellInView(d.startCell, w);
+
+        if (d.pathVertices.length > 1e3) return true; // Too expensive to judge complex multi-cells
+
+        // multi-cell, check whole path
+        const carryCell = d.startCell.slice();
+        const cells = [carryCell.slice()];
+        d.pathVertices.forEach(vert => {
+          switch(vert) {
+            case 'U': carryCell[1]--; break;
+            case 'D': carryCell[1]++; break;
+            case 'L': carryCell[0]--; break;
+            case 'R': carryCell[0]++; break;
+          }
+          cells.push(carryCell.slice());
+        });
+        return cells.some(c => cellInView(c, w));
       });
 
       if (state.zooming && dataInView.length > MAX_OBJECTS_TO_ANIMATE_ZOOM) {
