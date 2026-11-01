@@ -1,0 +1,105 @@
+<head>
+  <title>Hilbert Prefix Deaggregation</title>
+
+  <script src='//cdn.jsdelivr.net/npm/hilbert-chart'></script>
+<!--  <script src='../../dist/hilbert-chart.js'></script>-->
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+    }
+    #ipv4-chart { display: inline-block; }
+  </style>
+</head>
+<body>
+  <div id='ipv4-chart'></div>
+
+  <script type="module">
+    import * as Ip from 'https://esm.sh/ip.js';
+    import { csvParse, dsvFormat, csvParseRows } from 'https://esm.sh/d3-dsv';
+
+    const chart = new HilbertChart(document.getElementById('ipv4-chart'), { useCanvas: false })
+      .hilbertOrder(32 / 2)
+      .rangePaddingAbsolute(2)
+      .valFormatter(ipFormatter)
+      .rangeColor(() => 'rgba(0,0,128,0.07)')
+      .rangeLabelColor('rgba(0,0,64,0.7)')
+      .heatmapOpacity(0.9)
+      .rangeTooltipContent(d => `<b>${d.name}</b>: ${prefixFormatter(d)}`)
+      .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
+
+    // Get the IANA data
+    fetch('../ipv4-address-space/ipv4-address-space.csv').then(r => r.text()).then(csvParse).then(data => {
+      data.forEach(row => {
+        row.prefix = row.Prefix;
+        row.name = row.Designation;
+      });
+      chart.data(parseIpData(data));
+    });
+
+    // Get RIR globally announced prefixes
+    fetch('https://bgp.potaroo.net/ipv4-stats/prefixes_adv_pool.txt')
+      .then(r => r.text())
+      .then(t => dsvFormat(" ").parseRows(t, row => {
+        const ip = row[0].split('/')[0];
+        const len = +row[1];
+        return new Ip.Addr(ip).toNum() + len / 2;
+      }))
+      .then(chart.heatmapPoints);
+
+    //
+
+    function parseIpData(ipData) {
+      const prefixes = [];
+
+      ipData.map(row => {
+        const pref = new Ip.Prefix(row.prefix);
+        return {
+          start: pref.firstIp().toNum(),
+          length: pref.countIps(),
+          name: getName(row.name),
+          infos: [row]
+        };
+      }).forEach(prefix => {
+        let last;
+
+        if (prefixes.length
+          && (last = prefixes[prefixes.length - 1])
+          && last.name === prefix.name
+          && (last.start + last.length === prefix.start)) {
+
+          last.length += prefix.length;
+          last.infos.push(prefix.infos[0]);
+        } else {
+          prefixes.push(prefix);
+        }
+      });
+
+      return prefixes;
+
+      //
+
+      function getName(designation) {
+        let name = designation;
+
+        if (name.indexOf('Administered by') > -1) {
+          name = 'Various Registries';
+        }
+
+        return name;
+      }
+    }
+
+    function ipFormatter(d) {
+      return new Ip.Addr(d).toString();
+    }
+
+    function prefixFormatter(d) {
+      const ipRange = new Ip.Range(d.start, d.start + d.length - 1),
+        prefixes = ipRange.toPrefixes();
+
+      return (prefixes.length === 1 ? prefixes[0] : ipRange).toString();
+    }
+  </script>
+</body>

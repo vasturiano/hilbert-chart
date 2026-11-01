@@ -23,6 +23,7 @@ Uses [d3-hilbert](https://github.com/vasturiano/d3-hilbert) for the layout compu
 * [IPv4 prefixes (~1M using canvas)](https://vasturiano.github.io/hilbert-chart/examples/ipv4-prefix-viz/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/ipv4-prefix-viz/index.html))
 * [Ordinal (square pie chart)](https://vasturiano.github.io/hilbert-chart/examples/ordinal/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/ordinal/index.html))
 * [Heatmap](https://vasturiano.github.io/hilbert-chart/examples/heatmap/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/heatmap/index.html))
+* [Internet Fragmentation Heatmap](https://vasturiano.github.io/hilbert-chart/examples/internet-fragmentation/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/internet-fragmentation/index.html))
 
 Also live example at: https://observablehq.com/@vasturiano/hilbert-map-of-ipv4-address-space
 
