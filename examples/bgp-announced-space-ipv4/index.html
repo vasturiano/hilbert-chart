@@ -30,8 +30,8 @@
       .rangeTooltipContent(d => `<b>${d.name || ''}</b>: ${prefixFormatter(d)}`)
       .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
 
-    // Get the IANA IPv4 data
-    fetch('./iana-ipv4-address-space.csv').then(r => r.text()).then(csvParse).then(data => {
+    // Get the IANA data
+    fetch('../ipv4-address-space/ipv4-address-space.csv').then(r => r.text()).then(csvParse).then(data => {
       data.forEach(row => {
         row.prefix = row.Prefix;
         row.name = row.Designation;
