@@ -17,14 +17,14 @@
 
   <script type="module">
     import * as Ip from 'https://esm.sh/ip.js';
-    import { csvParse, dsvFormat, csvParseRows } from 'https://esm.sh/d3-dsv';
+    import { csvParse, dsvFormat } from 'https://esm.sh/d3-dsv';
 
     const chart = new HilbertChart(document.getElementById('ipv4-chart'), { useCanvas: false })
       .hilbertOrder(32 / 2)
       .rangePaddingAbsolute(2)
       .valFormatter(ipFormatter)
       .rangeColor(() => 'rgba(0,0,128,0.07)')
-      .rangeLabelColor('rgba(0,0,64,0.7)')
+      .rangeLabelColor(() => 'rgba(0,0,64,0.7)')
       .heatmapOpacity(0.9)
       .rangeTooltipContent(d => `<b>${d.name}</b>: ${prefixFormatter(d)}`)
       .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
