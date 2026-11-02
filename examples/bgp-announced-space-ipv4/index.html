@@ -41,22 +41,20 @@
       chart.data(ianaData);
 
       // Get BGP routing table data
-      const ipv4PrefixRegex = /(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\/(?:3[0-2]|[12]?\d)/;
-      const originAsnRegex = /\d+(?=\D*[ie?]\s*$)/;
+      const routeRegex = /^\*>?\s*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2})\s.*\s(\d+)\s[ie?]$/
       fetch('https://bgp.potaroo.net/as2.0/bgptable.txt')
         .then(r => r.text())
         .then(text => {
           const rows = text.split(/\r?\n/);
 
           const routes = rows.map(row => {
-            const matches = row.match(ipv4PrefixRegex);
-            const origin = matches && row.match(originAsnRegex)?.[0];
-            return matches ? [new Ip.Prefix(matches[0]), origin] : null;
+            const matches = row.match(routeRegex);
+            return matches && { prefix: new Ip.Prefix(matches[1]), asn: matches[2] };
           }).filter(route => route);
 
-          const data = routes.map(([p, asn]) => ({
-            start: p.firstIp().toNum(),
-            length: p.countIps(),
+          const data = routes.map(({ prefix, asn }) => ({
+            start: prefix.firstIp().toNum(),
+            length: prefix.countIps(),
             name: `AS${asn}`
           })).sort((a, b) => b.length - a.length);
 
