@@ -17,7 +17,7 @@
 
   <script type="module">
     import * as Ip from 'https://esm.sh/ip.js';
-    import { csvParse, csvParseRows } from 'https://esm.sh/d3-dsv';
+    import { csvParse } from 'https://esm.sh/d3-dsv';
 
     const chart = new HilbertChart(document.getElementById('ipv4-chart'), { useCanvas: true })
       .hilbertOrder(32 / 2)
@@ -25,8 +25,8 @@
       .minCurveWidth(0.7)
       .valFormatter(ipFormatter)
       .showValTooltip(false)
-      .rangeColor(d => d.infos ? 'rgba(0,0,128,0.07)' : 'rgba(255,50,0,0.4)')
-      .rangeLabelColor(d => d.infos ? 'rgba(0,0,64,0.7)' : 'rgba(165, 42, 42, 0.5)')
+      .rangeColor(d => d.infos ? 'rgba(0,0,128,0.07)' : 'rgba(255,50,0,0.45)')
+      .rangeLabelColor(d => d.infos ? 'rgba(0,0,64,0.7)' : 'rgba(165, 42, 42, 0.55)')
       .rangeTooltipContent(d => `<b>${d.name || ''}</b>: ${prefixFormatter(d)}`)
       .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
 
@@ -41,23 +41,27 @@
       chart.data(ianaData);
 
       // Get BGP routing table data
-      fetch('https://bgp.potaroo.net/as2.0/bgp-table-aspath.txt')
+      const ipv4PrefixRegex = /(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\/(?:3[0-2]|[12]?\d)/;
+      const originAsnRegex = /\d+(?=\D*[ie?]\s*$)/;
+      fetch('https://bgp.potaroo.net/as2.0/bgptable.txt')
         .then(r => r.text())
-        .then(t => csvParseRows(t, ([row]) => row))
-      .then(rows => rows
-        // .filter(row => row.includes('Withdrawn'))
-        .map(row => {
-          const prefix = new Ip.Prefix(row.split(' ')[0]);
-          const origin = row.split(' - ')[0].split(' + ')[0].trim().split(' ').reverse()[0];
-          return {
-            start: prefix.firstIp().toNum(),
-            length: prefix.countIps(),
-            name: `AS${origin}`
-          };
-        })
-        .sort((a, b) => b.length - a.length)
-      )
-      .then(data => chart.data([...ianaData, ...data]));
+        .then(text => {
+          const rows = text.split(/\r?\n/);
+
+          const routes = rows.map(row => {
+            const matches = row.match(ipv4PrefixRegex);
+            const origin = matches && row.match(originAsnRegex)?.[0];
+            return matches ? [new Ip.Prefix(matches[0]), origin] : null;
+          }).filter(route => route);
+
+          const data = routes.map(([p, asn]) => ({
+            start: p.firstIp().toNum(),
+            length: p.countIps(),
+            name: `AS${asn}`
+          })).sort((a, b) => b.length - a.length);
+
+          chart.data([...ianaData, ...data]);
+        });
     });
 
     //
