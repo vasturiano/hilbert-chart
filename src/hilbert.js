@@ -410,8 +410,15 @@ export default Kapsule({
 
     state.useCanvas ? canvasUpdate() : svgUpdate();
 
+    state.heatmapContainer.style('top', `${state.margin}px`).style('left', `${state.margin}px`);
+    state.heatmap
+      .width(canvasWidth)
+      .height(canvasWidth)
+      .blurRadius(state.heatmapPointRadius)
+      .opacity(state.heatmapOpacity);
+    changedProps.hasOwnProperty('heatmapPoints') && heatmapUpdate();
+
     if (state.useCanvas && changedProps.hasOwnProperty('data')) {
-      const t0 = new Date();
       // re-index interval tree when data changes for fast lookups
       state.intervalTree = new IntervalTree();
       (state.data || []).forEach(d => state.intervalTree.insert({
@@ -420,14 +427,6 @@ export default Kapsule({
         data: d
       }));
     }
-
-    state.heatmapContainer.style('top', `${state.margin}px`).style('left', `${state.margin}px`);
-    state.heatmap
-      .width(canvasWidth)
-      .height(canvasWidth)
-      .blurRadius(state.heatmapPointRadius)
-      .opacity(state.heatmapOpacity);
-    changedProps.hasOwnProperty('heatmapPoints') && heatmapUpdate();
 
     //
 
