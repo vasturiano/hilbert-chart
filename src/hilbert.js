@@ -685,7 +685,7 @@ export default Kapsule({
           const ctxs = [ctx];
           ctxs.forEach(ctx => ctx.fillRect(x + padding / 2, y + padding / 2, rectW, rectW));
 
-          if (scaledW > 24) { // Hide labels on small square cells
+          if (scaledW > 20) { // Hide labels on small square cells
             const name = labelAcessor(d);
             if (name) {
               const fontSize = Math.min(
@@ -723,7 +723,7 @@ export default Kapsule({
             ctx.stroke();
           });
 
-          if (scaledW > 6 && (scaledW * path.length) > 24) {
+          if (scaledW > 6 && (scaledW * path.length) > 20) {
               // extend path extremities to cell edges for textpath
             const pathStart = path[0].map((c, idx) => c - (path[1][idx] - c) / 2);
             const pathEnd = path[path.length - 1].map((c, idx) => c - (path[path.length - 2][idx] - c) / 2);
