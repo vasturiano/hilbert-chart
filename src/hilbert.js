@@ -288,9 +288,13 @@ export default Kapsule({
     state.rangeTooltip = new Tooltip(d3El).offsetX(0).offsetY(-12);
     const valTooltip = new Tooltip(d3El).offsetX('-10px').offsetY(20);
 
-    hilbertCanvas.on('mouseout', () => {
+    hilbertCanvas.on('mouseleave', () => {
+      valTooltip.content(false);
+      updateRangeTooltip(state, null);
+
       if (state.useCanvas && state.hoverD) {
         state.hoverD = null;
+        hilbertCanvas.style('cursor', null);
         state.onRangeHover && state.onRangeHover(null);
       }
     });
@@ -326,11 +330,11 @@ export default Kapsule({
         }
       }
 
-      if (state.showValTooltip || state.onPointerMove) {
-        state.showValTooltip && valTooltip.content(state.valFormatter(val));
+      state.showValTooltip
+        ? valTooltip.content(state.valFormatter(val))
+        : valTooltip.content(false);
 
-        state.onPointerMove && state.onPointerMove(val, ev);
-      }
+      state.onPointerMove && state.onPointerMove(val, ev);
     });
 
     // Setup axises
@@ -454,7 +458,8 @@ export default Kapsule({
           updateRangeTooltip(state, d);
           state.onRangeHover && state.onRangeHover(d);
         })
-        .on('mouseout', () => {
+        .on('mouseleave', () => {
+          updateRangeTooltip(state, null);
           state.onRangeHover && state.onRangeHover(null);
         });
 
