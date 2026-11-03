@@ -4,7 +4,6 @@ import { schemePaired as d3SchemePaired } from 'd3-scale-chromatic';
 import { axisLeft as d3AxisLeft, axisRight as d3AxisRight, axisTop as d3AxisTop, axisBottom as d3AxisBottom } from 'd3-axis';
 import { zoom as d3Zoom, zoomTransform as d3ZoomTransform, ZoomTransform } from 'd3-zoom';
 import d3Hilbert from 'd3-hilbert';
-import d3Tip from 'd3-tip';
 import gsap from 'gsap';
 import './canvas-textpath/ctxtextpath.js';
 import Heatmap from 'heatmap2d';
@@ -90,34 +89,21 @@ export default Kapsule({
 
       return this;
     },
-    addMarker(state, pos, markerUrl, width, height, tooltipFormatter) {
+    addMarker(state, pos, markerUrl, width, height) {
       if (state.useCanvas) return this; // not supported in canvas mode
-
-      tooltipFormatter = tooltipFormatter || (d => state.valFormatter(d.start));
 
       const range = {
         start: pos,
-        length: 1
+        length: typeof pos === 'bigint' ? 1n : 1
       };
       state.hilbert.layout(range);
 
-      const marker = state.svg.select('.markers-canvas').append('svg:image')
+      state.svg.select('.markers-canvas').append('svg:image')
         .attr('xlink:href', markerUrl)
         .attr('width', width)
         .attr('height', height)
         .attr('x', Number(range.startCell[0]) * range.cellWidth - width/2)
         .attr('y', Number(range.startCell[1]) * range.cellWidth - height/2);
-
-      // Tooltip
-      const markerTooltip = d3Tip()
-        .attr('class', 'hilbert-tooltip')
-        .offset([-15, 0])
-        .html(tooltipFormatter);
-      state.svg.call(markerTooltip);
-
-      marker.on('mouseover', (ev, d) => markerTooltip.show(d));
-      marker.on('mouseout', (ev, d) => markerTooltip.hide(d));
-
       return this;
     },
     _refreshAxises(state) {
