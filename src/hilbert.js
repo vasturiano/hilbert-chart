@@ -49,18 +49,23 @@ export default Kapsule({
     focusOn: function(state, pos, length, transitionDuration) {
       setTimeout(() => { // async so that it runs after initialization
         const N_SAMPLES = Math.pow(4, 2) + 1; // +1 to sample outside of bit boundaries
-        const pnts = [{ start: pos, length: 1 }, ...[...Array(N_SAMPLES).keys()].map(n => ({ start: pos + Math.round(length * (n + 1)/ N_SAMPLES), length: 1 }))];
+        const pnts = typeof pos !== 'bigint'
+          ? [{ start: pos, length: 1 }, ...[...Array(N_SAMPLES).keys()].map(n => ({ start: pos + Math.round(length * (n + 1)/ N_SAMPLES), length: 1 }))]
+          : [{ start: pos, length: 1n }, ...[...Array(N_SAMPLES).keys()].map(n => ({ start: pos + length * BigInt(n + 1) / BigInt(N_SAMPLES), length: 1n }))];
         pnts.forEach(state.hilbert.layout);
 
         // Figure out bounding box (in side bit units)
-        const tl = [Math.min(...pnts.map(p => p.startCell[0])), Math.min(...pnts.map(p => p.startCell[1]))];
-        const br = [Math.max(...pnts.map(p => p.startCell[0])), Math.max(...pnts.map(p => p.startCell[1]))];
-        const side = Math.max(br[0] - tl[0], br[1] - tl[1]);
+        const tl = [minNumber(...pnts.map(p => p.startCell[0])), minNumber(...pnts.map(p => p.startCell[1]))];
+        const br = [maxNumber(...pnts.map(p => p.startCell[0])), maxNumber(...pnts.map(p => p.startCell[1]))];
+        const side = maxNumber(br[0] - tl[0], br[1] - tl[1]);
 
+        const cellCoordToPx = typeof pos !== 'bigint'
+          ? c => c * state.canvasWidth / side
+          : c => Number(c * BigInt(state.canvasWidth) / side);
         const destination = {
-          x: -tl[0] * state.canvasWidth / side,
-          y: -tl[1] * state.canvasWidth / side,
-          k: Math.pow(2, state.hilbertOrder) / side
+          x: -cellCoordToPx(tl[0]),
+          y: -cellCoordToPx(tl[1]),
+          k: Math.pow(2, state.hilbertOrder) / Number(side)
         };
 
         if (!transitionDuration) { // no animation
@@ -99,8 +104,8 @@ export default Kapsule({
         .attr('xlink:href', markerUrl)
         .attr('width', width)
         .attr('height', height)
-        .attr('x', range.startCell[0] * range.cellWidth - width/2)
-        .attr('y', range.startCell[1] * range.cellWidth - height/2);
+        .attr('x', Number(range.startCell[0]) * range.cellWidth - width/2)
+        .attr('y', Number(range.startCell[1]) * range.cellWidth - height/2);
 
       // Tooltip
       const markerTooltip = d3Tip()
@@ -307,7 +312,7 @@ export default Kapsule({
       if (state.useCanvas && (state.onRangeHover || state.showRangeTooltip)) {
         const hoverDs = !state.intervalTree ? [] : state.intervalTree.search(val, val)
           .map(d => d.data)
-          .sort((a, b) => a.length - b.length); // prefer smaller cells
+          .sort((a, b) => numberComparator(a.length, b.length)); // prefer smaller cells
         const hoverD = hoverDs.length ? hoverDs[0] : null;
 
         if (hoverD !== state.hoverD) {
@@ -319,7 +324,7 @@ export default Kapsule({
             const tooltipContent = state.rangeTooltipContent
               ? accessorFn(state.rangeTooltipContent)(d)
               // default tooltip
-              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
+              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - (typeof d.start === 'bigint' ? 1n : 1)) : '')}`
 
             state.rangeTooltip.content(tooltipContent);
           } else {
@@ -416,7 +421,7 @@ export default Kapsule({
       .height(canvasWidth)
       .blurRadius(state.heatmapPointRadius)
       .opacity(state.heatmapOpacity);
-    changedProps.hasOwnProperty('heatmapPoints') && heatmapUpdate();
+    ['heatmapPoints', 'width', 'margin', 'hilbertOrder'].some(p => changedProps.hasOwnProperty(p)) && heatmapUpdate();
 
     if (state.useCanvas && changedProps.hasOwnProperty('data')) {
       // re-index interval tree when data changes for fast lookups
@@ -461,7 +466,7 @@ export default Kapsule({
             const tooltipContent = state.rangeTooltipContent
               ? accessorFn(state.rangeTooltipContent)(d)
               // default tooltip
-              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - 1) : '')}`
+              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - (typeof d.start === 'bigint' ? 1n : 1)) : '')}`
 
             state.rangeTooltip.content(tooltipContent);
           } else {
@@ -516,7 +521,7 @@ export default Kapsule({
 
       rangePaths
         .attr('transform', d =>
-          `scale(${d.cellWidth}) translate(${d.startCell[0] + .5},${d.startCell[1] + .5})`
+          `scale(${d.cellWidth}) translate(${Number(d.startCell[0]) + .5},${Number(d.startCell[1]) + .5})`
       );
 
       rangePaths.selectAll('text')
@@ -614,9 +619,9 @@ export default Kapsule({
       const minCellWidth = state.minCurveWidth / zoomTransform.k;
       function cellInView(cellCoords, cellWidth) {
         const w = cellWidth;
-        const x = cellCoords[0] * w;
+        const x = Number(cellCoords[0]) * w;
         if (x > viewWindow.x + viewWindow.len || (x + w) < viewWindow.x) return false;
-        const y = cellCoords[1] * w;
+        const y = Number(cellCoords[1]) * w;
         return !(y > viewWindow.y + viewWindow.len || (y + w) < viewWindow.y);
       }
       let dataInView = state.data.filter(d => {
@@ -644,12 +649,16 @@ export default Kapsule({
       });
 
       if (state.zooming && dataInView.length > MAX_OBJECTS_TO_ANIMATE_ZOOM) {
-        const getBitBoundary = n => {
+        function getBitBoundary(n) {
           if (!n) return 0;
           let cnt = 0;
-          while(!(n%1)) { n /= 2; cnt++; }
+          if (typeof n === 'bigint') {
+            while(n && n % 2n === 0n) { n /= 2n; cnt++; }
+            return cnt + 1;
+          }
+          while(Number.isInteger(n)) { n /= 2; cnt++; }
           return cnt;
-        };
+        }
 
         // prefer larger objects on a bit boundary
         const keepIdxs = new Set(dataInView
@@ -676,7 +685,7 @@ export default Kapsule({
         const padding = Math.min(w * 0.5, relPadding * w + absPadding / zoomTransform.k);
 
         if (d.pathVertices.length === 0) { // single cell -> draw a square
-          const [x, y] = d.startCell.map(c => c * w);
+          const [x, y] = d.startCell.map(c => Number(c) * w);
 
           const rectW = w - padding;
 
@@ -700,7 +709,7 @@ export default Kapsule({
             }
           }
         } else { // draw path (with textpath labels)
-          let [x, y] = d.startCell.map(c => c * w + w / 2);
+          let [x, y] = d.startCell.map(c => Number(c) * w + w / 2);
           const path = [[x, y], ...d.pathVertices.map(vert => {
             switch(vert) {
               case 'U': y-=w; break;
@@ -754,11 +763,23 @@ export default Kapsule({
 
       state.heatmapCoordData = state.heatmapPoints
         .map(state.hilbert.getXyAtVal)
-        .filter(cells => !!cells) // exclude null points
-        .map(cells => cells.map(c => (c + 0.5) * cellWidth)); // [x, y]
+        .filter(cell => !!cell) // exclude null points
+        .map(cell => cell.map(c => (Number(c) + 0.5) * cellWidth)); // [x, y]
 
       const zoomTransform = d3ZoomTransform(state.zoom.__baseElem.node());
       state.heatmap.data(state.heatmapCoordData.map(pnt => zoomTransform.apply(pnt)));
     }
   }
 });
+
+function minNumber(...nums) {
+  return nums.reduce((min, current) => current < min ? current : min);
+}
+
+function maxNumber(...nums) {
+  return nums.reduce((max, current) => current > max ? current : max);
+}
+
+function numberComparator(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}

@@ -4,13 +4,14 @@ export interface ConfigOptions {
 
 type Accessor<In, Out> = Out | string | ((obj: In) => Out);
 type RangeAccessor<T> = Accessor<Range, T>;
+type NumericValue = number | bigint;
 
 export interface Range {
-  start: number;
-  length: number;
+  start: NumericValue;
+  length: NumericValue;
 }
 
-type NumFormatter = (num: number) => string;
+type NumFormatter = (num: NumericValue) => string;
 
 declare class HilbertChart {
   constructor(element: HTMLElement, configOptions?: ConfigOptions);
@@ -25,8 +26,8 @@ declare class HilbertChart {
 
   data(): Range[];
   data(data: Range[]): HilbertChart;
-  heatmapPoints(): number[];
-  heatmapPoints(pnts: number[]): HilbertChart;
+  heatmapPoints(): NumericValue[];
+  heatmapPoints(pnts: NumericValue[]): HilbertChart;
   heatmapPointRadius(): number;
   heatmapPointRadius(radius: number): HilbertChart;
   heatmapOpacity(): number;
@@ -48,7 +49,7 @@ declare class HilbertChart {
   minCurveWidth(): number;
   minCurveWidth(minCurveWidth: number): HilbertChart;
 
-  focusOn(pos:number, length: number, ms?: number): HilbertChart;
+  focusOn(pos: NumericValue, length: NumericValue, ms?: number): HilbertChart;
 
   showValTooltip(): boolean;
   showValTooltip(show: boolean): HilbertChart;
@@ -61,7 +62,7 @@ declare class HilbertChart {
 
   onRangeClick(cb: (range: Range) => void): HilbertChart;
   onRangeHover(cb: (range: Range | null) => void): HilbertChart;
-  onPointerMove(cb: (value: number, event: MouseEvent) => void): HilbertChart;
+  onPointerMove(cb: (value: NumericValue, event: MouseEvent) => void): HilbertChart;
   onZoom(callback: (transform: {k: number, x: number, y: number}) => void): HilbertChart;
   onZoomEnd(callback: (transform: {k: number, x: number, y: number}) => void): HilbertChart;
 }
