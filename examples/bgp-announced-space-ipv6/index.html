@@ -9,17 +9,17 @@
       margin: 0;
       text-align: center;
     }
-    #ipv4-chart { display: inline-block; }
+    #ipv6-chart { display: inline-block; }
   </style>
 </head>
 <body>
-  <div id='ipv4-chart'></div>
+  <div id='ipv6-chart'></div>
 
   <script type="module">
     import * as Ip from 'https://esm.sh/ip.js';
     import { csvParse } from 'https://esm.sh/d3-dsv';
 
-    const chart = new HilbertChart(document.getElementById('ipv4-chart'), { useCanvas: true })
+    const chart = new HilbertChart(document.getElementById('ipv6-chart'), { useCanvas: true })
       .hilbertOrder(128 / 2)
       .rangePaddingAbsolute(1)
       .minCurveWidth(0)
