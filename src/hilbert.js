@@ -13,6 +13,7 @@ import accessorFn from 'accessor-fn';
 import Tooltip from 'float-tooltip';
 import { IntervalTree } from 'node-interval-tree';
 import ScrollZoomClamp from 'scroll-zoom-clamp';
+import { getHilbertPath, updateRangeTooltip, minNumber, maxNumber, numberComparator } from './hilbert-utils.js';
 
 const N_TICKS = Math.pow(2, 3); // Force place ticks on bit boundaries
 const MAX_OBJECTS_TO_ANIMATE_ZOOM = 90e3; // To prevent blocking interaction in canvas mode
@@ -198,11 +199,11 @@ export default Kapsule({
           state.hilbertCanvas.attr('transform', zoomTransform);
 
           // Adjust cells abs padding
-          const _paddingAccessorFn = accessorFn(state.rangePadding);
-          const paddingAccessor = d => Math.max(0, Math.min(1, _paddingAccessorFn(d))); // limit to [0, 1] range
+          const _paddingRelAccessorFn = accessorFn(state.rangePadding);
+          const paddingRelAccessor = d => Math.max(0, Math.min(1, _paddingRelAccessorFn(d))); // limit to [0, 1] range
           const paddingAbsAccessor = accessorFn(state.rangePaddingAbsolute);
           state.svg.selectAll('.hilbert-segment > path')
-            .style('stroke-width', d => Math.max(0, 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth / zoomTransform.k))
+            .style('stroke-width', d => Math.max(0, 1 - paddingRelAccessor(d) - paddingAbsAccessor(d) / d.cellWidth / zoomTransform.k));
 
           this._refreshAxises();
         } else { // canvas
@@ -318,18 +319,7 @@ export default Kapsule({
         if (hoverD !== state.hoverD) {
           state.hoverD = hoverD;
 
-          if (hoverD && state.showRangeTooltip) {
-            const d = hoverD;
-            const label = accessorFn(state.rangeLabel)(d);
-            const tooltipContent = state.rangeTooltipContent
-              ? accessorFn(state.rangeTooltipContent)(d)
-              // default tooltip
-              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - (typeof d.start === 'bigint' ? 1n : 1)) : '')}`
-
-            state.rangeTooltip.content(tooltipContent);
-          } else {
-            state.rangeTooltip.content(false);
-          }
+          updateRangeTooltip(state, hoverD);
 
           hilbertCanvas.style('cursor', hoverD && state.onRangeClick ? 'pointer' : null);
           state.onRangeHover && state.onRangeHover(hoverD || null);
@@ -382,8 +372,8 @@ export default Kapsule({
     const labelAcessor = accessorFn(state.rangeLabel);
     const labelColorAccessor = accessorFn(state.rangeLabelColor);
     const colorAccessor = state.rangeColor ? accessorFn(state.rangeColor) : (d => state.defaultColorScale(labelAcessor(d) || ''));
-    const _paddingAccessorFn = accessorFn(state.rangePadding);
-    const paddingAccessor = d => Math.max(0, Math.min(1, _paddingAccessorFn(d))); // limit to [0, 1] range
+    const _paddingRelAccessorFn = accessorFn(state.rangePadding);
+    const paddingRelAccessor = d => Math.max(0, Math.min(1, _paddingRelAccessorFn(d))); // limit to [0, 1] range
     const paddingAbsAccessor = accessorFn(state.rangePaddingAbsolute);
 
     state.hilbert
@@ -461,18 +451,7 @@ export default Kapsule({
         .attr('fill', labelColorAccessor)
         .on('click', (ev, d) => state.onRangeClick && state.onRangeClick(d))
         .on('mouseover', (ev, d) => {
-          if (state.showRangeTooltip) {
-            const label = accessorFn(state.rangeLabel)(d);
-            const tooltipContent = state.rangeTooltipContent
-              ? accessorFn(state.rangeTooltipContent)(d)
-              // default tooltip
-              : `${label ? `<b>${label}</b>: ` : ''}${state.valFormatter(d.start) + (d.length > 1 ? ' - ' + state.valFormatter(d.start + d.length - (typeof d.start === 'bigint' ? 1n : 1)) : '')}`
-
-            state.rangeTooltip.content(tooltipContent);
-          } else {
-            state.rangeTooltip.content(false);
-          }
-
+          updateRangeTooltip(state, d);
           state.onRangeHover && state.onRangeHover(d);
         })
         .on('mouseout', () => {
@@ -516,7 +495,7 @@ export default Kapsule({
       rangePaths.selectAll('path') //.transition()
         .attr('d', d => getHilbertPath(d.pathVertices))
         .style('stroke', colorAccessor)
-        .style('stroke-width', d => Math.max(0, 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth / zoomTransform.k ))
+        .style('stroke-width', d => Math.max(0, 1 - paddingRelAccessor(d) - paddingAbsAccessor(d) / d.cellWidth / zoomTransform.k ))
         .style('cursor', state.onRangeClick ? 'pointer' : null);
 
       rangePaths
@@ -527,7 +506,7 @@ export default Kapsule({
       rangePaths.selectAll('text')
         .attr('font-size', d => Math.max(0, Math.min(...[
           0.25,                 // Max 25% of path height
-          (d.pathVertices.length + 1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth) * 0.25, // Max 25% path length
+          (d.pathVertices.length + 1 - paddingRelAccessor(d) - paddingAbsAccessor(d) / d.cellWidth) * 0.25, // Max 25% path length
           canvasWidth / d.cellWidth * 0.03  // Max 3% of canvas size
         ])))
         .attr('textLength', d => {
@@ -540,7 +519,7 @@ export default Kapsule({
             return Math.min(d.pathVertices.length, name.length * MAX_TEXT_EXPANSION);
           } else {
             MAX_TEXT_EXPANSION = 0.15;
-            return Math.max(0, Math.min(0.95 * (1 - paddingAccessor(d) - paddingAbsAccessor(d) / d.cellWidth), name.length * MAX_TEXT_EXPANSION));
+            return Math.max(0, Math.min(0.95 * (1 - paddingRelAccessor(d) - paddingAbsAccessor(d) / d.cellWidth), name.length * MAX_TEXT_EXPANSION));
           }
         })
         .filter(d => !d.pathVertices.length)
@@ -553,36 +532,6 @@ export default Kapsule({
         })
         .attr('text-anchor', 'middle');
 
-      //
-
-      function getHilbertPath(vertices) {
-        if (!vertices.every(v => v === 'L')) {
-          let path = 'M0 0L0 0';
-
-          vertices.forEach(function(vert) {
-            switch(vert) {
-              case 'U': path += 'v-1'; break;
-              case 'D': path += 'v1'; break;
-              case 'L': path += 'h-1'; break;
-              case 'R': path += 'h1'; break;
-            }
-          });
-          return path;
-        } else { // reverse path (to prevent upside down text)
-          let path = '';
-
-          const lastPos = [0, 0];
-          vertices.slice().reverse().forEach(function(vert) {
-            switch(vert) {
-              case 'U': path += 'v1'; lastPos[1]-=1; break;
-              case 'D': path += 'v-1'; lastPos[1]+=1; break;
-              case 'L': path += 'h1'; lastPos[0]-=1; break;
-              case 'R': path += 'h-1'; lastPos[0]+=1; break;
-            }
-          });
-          return `M${lastPos.join(' ')}L${lastPos.join(' ')}${path}`;
-        }
-      }
     }
 
     function canvasUpdate() {
@@ -680,7 +629,7 @@ export default Kapsule({
 
         const w = d.cellWidth;
         const scaledW = w * zoomTransform.k;
-        const relPadding = paddingAccessor(d);
+        const relPadding = paddingRelAccessor(d);
         const absPadding = paddingAbsAccessor(d);
         const padding = Math.min(w * 0.5, relPadding * w + absPadding / zoomTransform.k);
 
@@ -690,8 +639,7 @@ export default Kapsule({
           const rectW = w - padding;
 
           ctx.fillStyle = colorAccessor(d);
-          const ctxs = [ctx];
-          ctxs.forEach(ctx => ctx.fillRect(x + padding / 2, y + padding / 2, rectW, rectW));
+          ctx.fillRect(x + padding / 2, y + padding / 2, rectW, rectW);
 
           if (scaledW > 20) { // Hide labels on small square cells
             const name = labelAcessor(d);
@@ -721,15 +669,12 @@ export default Kapsule({
           })];
 
           ctx.strokeStyle = colorAccessor(d);
-          const ctxs = [ctx];
-          ctxs.forEach(ctx => {
-            ctx.lineWidth = w - padding;
-            ctx.lineCap = 'square';
-            ctx.beginPath();
-            ctx.moveTo(...path[0]);
-            path.slice(1).forEach(([x, y]) => ctx.lineTo(x, y));
-            ctx.stroke();
-          });
+          ctx.lineWidth = w - padding;
+          ctx.lineCap = 'square';
+          ctx.beginPath();
+          ctx.moveTo(...path[0]);
+          path.slice(1).forEach(([x, y]) => ctx.lineTo(x, y));
+          ctx.stroke();
 
           if (scaledW > 6 && (scaledW * path.length) > 20) {
               // extend path extremities to cell edges for textpath
@@ -771,15 +716,3 @@ export default Kapsule({
     }
   }
 });
-
-function minNumber(...nums) {
-  return nums.reduce((min, current) => current < min ? current : min);
-}
-
-function maxNumber(...nums) {
-  return nums.reduce((max, current) => current > max ? current : max);
-}
-
-function numberComparator(a, b) {
-  return a < b ? -1 : a > b ? 1 : 0;
-}
