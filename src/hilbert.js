@@ -60,8 +60,8 @@ export default Kapsule({
         const side = maxNumber(br[0] - tl[0], br[1] - tl[1]);
 
         const cellCoordToPx = typeof pos !== 'bigint'
-          ? c => c * state.canvasWidth / side
-          : c => Number(c * BigInt(state.canvasWidth) / side);
+          ? c => Math.round(c * state.canvasWidth / side)
+          : c => Math.round(Number(c * BigInt(state.canvasWidth) / side));
         const destination = {
           x: -cellCoordToPx(tl[0]),
           y: -cellCoordToPx(tl[1]),
@@ -85,7 +85,7 @@ export default Kapsule({
             }, destination)
           );
         }
-      });
+      }, 1);
 
       return this;
     },
