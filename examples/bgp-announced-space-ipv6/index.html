@@ -1,0 +1,140 @@
+<head>
+  <title>Hilbert IPv6 BGP Routing Table</title>
+
+  <script src='//cdn.jsdelivr.net/npm/hilbert-chart'></script>
+<!--  <script src='../../dist/hilbert-chart.js'></script>-->
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+    }
+    #ipv4-chart { display: inline-block; }
+  </style>
+</head>
+<body>
+  <div id='ipv4-chart'></div>
+
+  <script type="module">
+    import * as Ip from 'https://esm.sh/ip.js';
+    import { csvParse } from 'https://esm.sh/d3-dsv';
+
+    const chart = new HilbertChart(document.getElementById('ipv4-chart'), { useCanvas: true })
+      .hilbertOrder(128 / 2)
+      .rangePaddingAbsolute(1)
+      .minCurveWidth(0)
+      .valFormatter(ipFormatter)
+      .showValTooltip(false)
+      .rangeColor(d => d.infos ? 'rgba(0,0,128,0.07)' : 'rgba(255,50,0,0.45)')
+      .rangeLabelColor(d => d.infos ? 'rgba(0,0,64,0.7)' : 'rgba(165, 42, 42, 0.55)')
+      .rangeTooltipContent(d => `<b>${d.name || ''}</b>: ${prefixFormatter(d)}`)
+      .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
+
+    // Get the IANA data
+    fetch('./ipv6-address-space.csv').then(r => r.text()).then(csvParse).then(data => {
+      data.forEach(row => {
+        row.prefix = row['IPv6 Prefix'];
+        row.name = row.Allocation;
+      });
+      chart.data([...chart.data(), ...parseIpData(data)]);
+    });
+
+    fetch('./ipv6-unicast-address-assignments.csv').then(r => r.text()).then(csvParse).then(data => {
+      data.forEach(row => {
+        row.prefix = row.Prefix;
+        row.name = row.Designation;
+      });
+      chart.data([...chart.data(), ...parseIpData(data)]);
+
+      // Focus on the most used unicast RIR allocations
+      setTimeout(() => chart.focusOn(new Ip.Addr('2001:', false).toNum(), 2n ** (128n - 16n),  5000), 800);
+    });
+
+    // Get BGP routing table data
+    const v6PrefixRegex = /^\*>?\s*([\d:]*\/\d{1,3})/;
+    const originAsnRegex = /(\d+)\s[ie?]$/;
+    fetch('https://bgp.potaroo.net/v6/as2.0/bgptable.txt')
+      .then(r => r.text())
+      .then(text => {
+        const rows = text.split(/\r?\n/);
+
+        let carryPrefix;
+        const routes = rows.map(row => {
+          !carryPrefix && (carryPrefix = row.match(v6PrefixRegex)?.[1]);
+          (carryPrefix === '::/0') && (carryPrefix = null); // ignore default route
+
+          if (carryPrefix) {
+            const matches = row.match(originAsnRegex);
+            if (matches) {
+              const prefix = new Ip.Prefix(carryPrefix, undefined, false);
+              carryPrefix = null;
+              return { prefix, asn: matches[1] };
+            }
+          }
+          return null;
+        }).filter(route => route);
+
+        const data = routes.map(({ prefix, asn }) => ({
+          start: prefix.firstIp().toNum(),
+          length: prefix.countIps(),
+          name: `AS${asn}`,
+        })).sort((a, b) => Number(b.length - a.length));
+
+        chart.data([...chart.data(), ...data]);
+      });
+
+    //
+
+    function parseIpData(ipData) {
+      const prefixes = [];
+
+      ipData.map(row => {
+        const pref = new Ip.Prefix(row.prefix, undefined, false);
+        return {
+          start: pref.firstIp().toNum(),
+          length: pref.countIps(),
+          name: getName(row.name),
+          infos: [row]
+        };
+      }).forEach(prefix => {
+        let last;
+
+        if (prefixes.length
+          && (last = prefixes[prefixes.length - 1])
+          && last.name === prefix.name
+          && (last.start + last.length === prefix.start)) {
+
+          last.length += prefix.length;
+          last.infos.push(prefix.infos[0]);
+        } else {
+          prefixes.push(prefix);
+        }
+      });
+
+      return prefixes;
+
+      //
+
+      function getName(designation) {
+        let name = designation;
+
+        if (name.indexOf('Administered by') > -1) {
+          name = 'Various Registries';
+        }
+
+        return name;
+      }
+    }
+
+    function ipFormatter(d) {
+      return new Ip.Addr(d, false).toString();
+    }
+
+    function prefixFormatter(d) {
+      const ipRange = new Ip.Range(d.start, d.start + d.length - 1n, false),
+        prefixes = ipRange.toPrefixes();
+
+      return (prefixes.length === 1 ? prefixes[0] : ipRange).toString();
+    }
+  </script>
+</body>
