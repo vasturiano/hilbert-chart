@@ -574,6 +574,16 @@ export default Kapsule({
       ctx.translate(zoomTransform.x * pxScale, zoomTransform.y * pxScale);
       ctx.scale(zoomTransform.k * pxScale, zoomTransform.k * pxScale);
 
+      // Labels use screen-space coordinates so Canvas never has to parse a
+      // font size that shrinks with the zoom factor.
+      function setLabelTransform() {
+        ctx.setTransform(
+          pxScale, 0, 0, pxScale,
+          zoomTransform.x * pxScale,
+          zoomTransform.y * pxScale
+        );
+      }
+
       const minCellWidth = state.minCurveWidth / zoomTransform.k;
       function cellInView(cellCoords, cellWidth) {
         const w = cellWidth;
@@ -656,13 +666,16 @@ export default Kapsule({
               const fontSize = Math.min(
                 20,             // absolute
                 scaledW * 0.25, // Max 25% of cell height
-                (scaledW - padding) / name.length * 1.5 // Fit text length
-              ) / zoomTransform.k;
+                (scaledW - padding * zoomTransform.k) / name.length * 1.5 // Fit text length
+              );
+              ctx.save();
+              setLabelTransform();
               ctx.font = `${fontSize}px Sans-Serif`;
               ctx.fillStyle = labelColorAccessor(d);
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.fillText(name, ...[x, y].map(c => c + w / 2));
+              ctx.fillText(name, ...[x, y].map(c => (c + w / 2) * zoomTransform.k));
+              ctx.restore();
             }
           }
         } else { // draw path (with textpath labels)
@@ -697,15 +710,18 @@ export default Kapsule({
               const fontSize = Math.min(
                 20,            // absolute
                 scaledW * 0.4, // Max 40% of cell height
-                (scaledW * path.length - padding) / name.length * 1.2 // Fit text length
-              ) / zoomTransform.k;
+                (scaledW * path.length - padding * zoomTransform.k) / name.length * 1.2 // Fit text length
+              );
+              ctx.save();
+              setLabelTransform();
               ctx.font = `${fontSize}px Sans-Serif`;
               ctx.fillStyle = labelColorAccessor(d);
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.lineWidth = 0.01; // no stroke outline
               // flip text if upside down (left oriented paths)
-              ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path)));
+              ctx.textPath(name, [].concat(...(d.pathVertices.every(v => v === 'L') ? path.slice().reverse() : path).map(([x, y]) => [x * zoomTransform.k, y * zoomTransform.k])));
+              ctx.restore();
             }
           }
         }
