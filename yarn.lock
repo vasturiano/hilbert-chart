@@ -1644,14 +1644,14 @@ fdir@^6.2.0:
   resolved "https://registry.yarnpkg.com/fdir/-/fdir-6.5.0.tgz#ed2ab967a331ade62f18d077dae192684d50d350"
   integrity sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==
 
-float-tooltip@^1.7:
-  version "1.7.5"
-  resolved "https://registry.yarnpkg.com/float-tooltip/-/float-tooltip-1.7.5.tgz#7083bf78f0de5a97f9c2d6aa8e90d2139f34047f"
-  integrity sha512-/kXzuDnnBqyyWyhDMH7+PfP8J/oXiAavGzcRxASOMRHFuReDtofizLLJsf7nnDLAfEaMW4pVWaXrAjtnglpEkg==
+float-tooltip@^1.8:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/float-tooltip/-/float-tooltip-1.8.0.tgz#5765cc1c7ac7c901380a62c6bbfa2d2bb61dc643"
+  integrity sha512-9iixvzv6T0GQwXugQOdDBBzGCbMsPzpq2vnimyefcCnhDIjsKpPNqLiZ3WaeDBqjx6Uxt26I24ZW98H6SdYRnQ==
   dependencies:
     d3-selection "2 - 3"
     kapsule "^1.16"
-    preact "10"
+    preact "11"
 
 flru@1.0.2:
   version "1.0.2"
@@ -1690,9 +1690,9 @@ glob@^14.0.3:
     path-scurry "^3.0.0"
 
 gsap@^3.12:
-  version "3.15.0"
-  resolved "https://registry.yarnpkg.com/gsap/-/gsap-3.15.0.tgz#7851baaffc77642f2db3b1749d3634f9b5a19d14"
-  integrity sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A==
+  version "3.15.1"
+  resolved "https://registry.yarnpkg.com/gsap/-/gsap-3.15.1.tgz#593af220d8bec874b30c4f4b2f459057bf6fe5a1"
+  integrity sha512-63yjWRFWj3QRP1UOuD8kcidCcy3nxb1mMRpwHr/xJRvPfm9GtWOXFAYUiL0ro1fgPq2nY53LR+98pAgy9BumBg==
 
 has-flag@^4.0.0:
   version "4.0.0"
@@ -2232,10 +2232,10 @@ postcss@^8.5.32:
     picocolors "^1.1.1"
     source-map-js "^1.2.2"
 
-preact@10:
-  version "10.29.8"
-  resolved "https://registry.yarnpkg.com/preact/-/preact-10.29.8.tgz#fc85b82dc2474e245b1430b51781d417361f5fc3"
-  integrity sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==
+preact@11:
+  version "11.1.1"
+  resolved "https://registry.yarnpkg.com/preact/-/preact-11.1.1.tgz#8f4c2dd333c0ba0d36b68ca4d8998d09854c02ec"
+  integrity sha512-vpFVfai437pbuLri7XVeslCPfrEZX6Z1S2gV+MOFrA/kji+NKUXvH7y01EnVjA1guLigfkVp77Sqipd4SIllCg==
 
 promise.series@^0.2.0:
   version "0.2.0"

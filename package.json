@@ -49,7 +49,7 @@
     "d3-scale-chromatic": "2 - 3",
     "d3-selection": "2 - 3",
     "d3-zoom": "1 - 3",
-    "float-tooltip": "^1.7",
+    "float-tooltip": "^1.8",
     "gsap": "^3.12",
     "heatmap2d": "1",
     "kapsule": "^1.16",

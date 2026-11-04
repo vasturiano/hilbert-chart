@@ -171,6 +171,12 @@ export default Kapsule({
       .on('zoom', ev => {
         if (!state.enableZoom && ev.sourceEvent) return;
 
+        // d3Zoom prevents propagation of mousemove events to the tooltips so pass it directly
+        if (ev.sourceEvent && ev.sourceEvent.type === 'mousemove') {
+          state.rangeTooltip.positionFromEvent(ev.sourceEvent);
+          valTooltip.positionFromEvent(ev.sourceEvent);
+        }
+
         const zoomTransform = ev.transform;
         ev.sourceEvent && (state.zooming = true);
 
