@@ -38,7 +38,7 @@
     // Get the IANA data
     fetch('./asn16.csv').then(r => r.text()).then(csvParse).then(data => {
       chart.data([...chart.data(), ...parseIanaData(data)]);
-      chart.focusOn(0, 2 ** 16, 3000); // Focus on 16-bit area
+      setTimeout(() => chart.focusOn(0, 2 ** 16, 3000), 600); // Focus on 16-bit area
     });
     fetch('./asn32.csv').then(r => r.text()).then(csvParse).then(data => {
       chart.data([...chart.data(), ...parseIanaData(data)]);
