@@ -47,6 +47,7 @@ export default Kapsule({
 
   methods: {
     focusOn: function(state, pos, length, transitionDuration) {
+      state.focusTween?.kill();
       setTimeout(() => { // async so that it runs after initialization
         const N_SAMPLES = Math.pow(4, 2) + 1; // +1 to sample outside of bit boundaries
         const pnts = typeof pos !== 'bigint'
@@ -72,7 +73,7 @@ export default Kapsule({
           state.zoom.transform(state.zoom.__baseElem, new ZoomTransform(destination.k, destination.x, destination.y));
         } else {
           const t = { ...d3ZoomTransform(state.zoom.__baseElem.node()) }; // { k, x, y }
-          gsap.to(
+          state.focusTween = gsap.to(
             t,
             Object.assign({
               duration: transitionDuration / 1000,
@@ -81,7 +82,14 @@ export default Kapsule({
                 state.zooming = true;
                 state.zoom.transform(state.zoom.__baseElem, new ZoomTransform(t.k, t.x, t.y))
               },
-              onComplete: () => state.zooming = false,
+              onComplete: () => {
+                state.focusTween = null;
+                state.zooming = false;
+              },
+              onInterrupt: () => {
+                state.focusTween = null;
+                state.zooming = false;
+              }
             }, destination)
           );
         }
@@ -168,6 +176,9 @@ export default Kapsule({
 
     // zoom interaction
     state.zoom = d3Zoom()
+      .on('start', ev => {
+        if (state.enableZoom && ev.sourceEvent) state.focusTween?.kill();
+      })
       .on('zoom', ev => {
         if (!state.enableZoom && ev.sourceEvent) return;
 
