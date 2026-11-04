@@ -1,0 +1,115 @@
+<head>
+  <title>Hilbert of Announcing AS Numbers</title>
+
+  <script src='//cdn.jsdelivr.net/npm/hilbert-chart'></script>
+<!--  <script src='../../dist/hilbert-chart.js'></script>-->
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+    }
+    #asn-chart { display: inline-block; }
+  </style>
+</head>
+<body>
+  <div id='asn-chart'></div>
+
+  <script type="module">
+    import { csvParse } from 'https://esm.sh/d3-dsv';
+    import { scalePow } from 'https://esm.sh/d3-scale';
+    import { interpolateYlOrRd } from 'https://esm.sh/d3-scale-chromatic';
+    import indexBy from 'https://esm.sh/index-array-by';
+
+    const colorInterpolator = interpolateYlOrRd;
+    const colorScale = scalePow().exponent(1/16);
+
+    const chart = new HilbertChart(document.getElementById('asn-chart'), { useCanvas: true })
+      .hilbertOrder(20 / 2)
+      .rangePaddingAbsolute(d => d.infos ? 1 : 0)
+      .minCurveWidth(0)
+      .valFormatter(asnFormatter)
+      .showValTooltip(false)
+      .rangeColor(() => 'rgba(0,0,128,0.07)')
+      .rangeLabelColor(() => 'rgba(0,0,64,0.7)')
+      .rangeTooltipContent(d => `<b>${d.name}</b>: ${d.infos ? `${asnFormatter(d.start)} - ${asnFormatter(d.start + d.length - 1)}` : `${d.count} prefixes`}`)
+      .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
+
+    // Get the IANA data
+    fetch('./asn16.csv').then(r => r.text()).then(csvParse).then(data => {
+      chart.data([...chart.data(), ...parseIanaData(data)]);
+      chart.focusOn(0, 2 ** 16, 3000); // Focus on 16-bit area
+    });
+    fetch('./asn32.csv').then(r => r.text()).then(csvParse).then(data => {
+      chart.data([...chart.data(), ...parseIanaData(data)]);
+    });
+
+    // Get BGP routing table data
+    // const routeRegex = /^\*>?\s*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2})\s.*\s(\d+)\s[ie?]$/
+    const originAsRegex = /\s(\d+)\s[ie?]$/
+    fetch('https://bgp.potaroo.net/as2.0/bgptable.txt')
+      .then(r => r.text())
+      .then(text => {
+        const rows = text.split(/\r?\n/);
+        const asnList = rows.map(row => row.match(originAsRegex)?.[1])
+          .filter(asn => asn);
+
+        const asnCnt = indexBy(asnList, asn => asn, arr => arr.length);
+
+        const maxPrefixCount = Math.max(...Object.values(asnCnt));
+        colorScale.domain([0, maxPrefixCount]);
+
+        const data = Object.entries(asnCnt).map(([asn, count]) => ({
+          start: +asn,
+          length: 1,
+          name: `AS${asn}`,
+          count
+        }));
+
+        chart
+          .rangeColor(d => d.infos ? 'rgba(0,0,128,0.07)' : colorInterpolator(colorScale(d.count / maxPrefixCount)))
+          .data([...chart.data(), ...data]);
+      });
+
+    //
+
+    function parseIanaData(asnData) {
+      const asns = [];
+      const ignoreNames = ['see sub-registry 16-bit as numbers']; // Remove 16bit placeholder
+
+      asnData.map(asn => {
+        const asRange = asn.Number.split('-');
+        return {
+          start: +asRange[0],
+          length: asRange.length > 1 ? +asRange[1] - asRange[0] + 1 : 1,
+          name: asn.Description.replace('Assigned by', ''),
+          infos: [asn]
+        };
+      }).filter(asn =>
+        ignoreNames.indexOf(asn.name.toLowerCase()) === -1
+      ).filter(asn =>
+        // Filter out really high stuff (perf issue)
+        asn.name.toLowerCase() !== 'unallocated' && (asn.start + asn.length) <= Math.pow(2, 24)
+      ).forEach(asn => {
+        let last;
+
+        if (asns.length
+          && (last = asns[asns.length - 1])
+          && last.name === asn.name
+          && (last.start + last.length === asn.start)) {
+
+          last.length += asn.length;
+          last.infos.push(asn.infos[0]);
+        } else {
+          asns.push(asn);
+        }
+      });
+
+      return asns;
+    }
+
+    function asnFormatter(n) {
+      return `AS${n}`;
+    }
+  </script>
+</body>

@@ -24,6 +24,7 @@ Uses [d3-hilbert](https://github.com/vasturiano/d3-hilbert) for the layout compu
 * [Heatmap](https://vasturiano.github.io/hilbert-chart/examples/heatmap/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/heatmap/index.html))
 * [IPv4 BGP Routing Table](https://vasturiano.github.io/hilbert-chart/examples/bgp-announced-space-ipv4/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/bgp-announced-space-ipv4/index.html))
 * [IPv6 BGP Routing Table](https://vasturiano.github.io/hilbert-chart/examples/bgp-announced-space-ipv6/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/bgp-announced-space-ipv6/index.html))
+* [AS Numbers](https://vasturiano.github.io/hilbert-chart/examples/as-numbers/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/as-numbers/index.html))
 * [Internet Fragmentation Heatmap](https://vasturiano.github.io/hilbert-chart/examples/internet-fragmentation/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/internet-fragmentation/index.html))
 
 Also live example at: https://observablehq.com/@vasturiano/hilbert-map-of-ipv4-address-space

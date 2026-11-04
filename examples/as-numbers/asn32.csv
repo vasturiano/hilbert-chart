@@ -1,0 +1,101 @@
+Number,Description,WHOIS,RDAP,Reference,Registration Date
+0-65535,See Sub-registry 16-bit AS numbers,,,[RFC 1930],
+65536-65551,Reserved for use in documentation and sample code,,,[RFC 5398],2008-12-03
+65552-131071,Reserved,,,,
+131072-132095,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2006-11-29
+132096-133119,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2011-08-09
+133120-133631,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2013-09-11
+133632-134556,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2014-09-02
+134557-135580,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2014-09-02
+135581-136505,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2016-05-25
+136506-137529,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2016-05-25
+137530-138553,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2017-12-07
+138554-139577,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2017-12-07
+139578-140601,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2019-06-12
+140602-141625,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2019-06-12
+141626-142649,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2020-10-20
+142650-143673,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2020-10-20
+143674-144697,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-05-05
+144698-145721,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-05-05
+145722-146745,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-05-05
+146746-147769,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-05-05
+147770-148793,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-10-11
+148794-149817,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-10-11
+149818-150841,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-10-11
+150842-151865,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2021-10-11
+151866-152889,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2023-05-10
+152890-153913,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2023-05-10
+153914-154937,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2025-01-17
+154938-155961,Assigned by APNIC,whois.apnic.net,https://rdap.apnic.net/,,2025-01-17
+155962-196607,Unallocated,,,,
+196608-197631,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2006-11-29
+197632-198655,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2011-01-04
+198656-199679,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2012-03-21
+199680-200191,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2013-09-09
+200192-201215,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2014-02-28
+201216-202239,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2014-02-28
+202240-203263,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2015-06-11
+203264-204287,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2015-06-11
+204288-205211,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2016-07-29
+205212-206235,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2016-07-29
+206236-207259,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2016-07-29
+207260-208283,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2018-08-20
+208284-209307,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2018-08-20
+209308-210331,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2018-08-20
+210332-211355,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2020-04-01
+211356-212379,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2020-04-01
+212380-213403,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2020-04-01
+213404-214427,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2023-08-10
+214428-215451,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2023-08-10
+215452-216475,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2023-08-10
+216476-217499,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2026-06-01
+217500-218523,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2026-06-01
+218524-219547,Assigned by RIPE NCC,whois.ripe.net,https://rdap.db.ripe.net/,,2026-06-01
+219548-262143,Unallocated,,,,
+262144-263167,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2006-11-29
+263168-263679,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2013-06-11
+263680-264604,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2014-09-05
+264605-265628,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2014-09-05
+265629-266652,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2016-09-08
+266653-267676,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2017-07-21
+267677-268700,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2017-07-21
+268701-269724,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2018-12-07
+269725-270748,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2018-12-07
+270749-271772,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2020-05-18
+271773-272796,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2020-05-18
+272797-273820,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2021-12-07
+273821-274844,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2024-03-22
+274845-275868,Assigned by LACNIC,whois.lacnic.net,https://rdap.lacnic.net/rdap/,,2025-11-19
+275869-327679,Unallocated,,,,
+327680-328703,Assigned by AFRINIC,whois.afrinic.net,"https://rdap.afrinic.net/rdap/
+http://rdap.afrinic.net/rdap/",,2006-11-29
+328704-329727,Assigned by AFRINIC,whois.afrinic.net,"https://rdap.afrinic.net/rdap/
+http://rdap.afrinic.net/rdap/",,2020-03-05
+329728-330751,Assigned by AFRINIC,whois.afrinic.net,"https://rdap.afrinic.net/rdap/
+http://rdap.afrinic.net/rdap/",,2026-02-25
+330752-393215,Unallocated,,,,
+393216-394239,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2006-11-30
+394240-395164,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2015-04-29
+395165-396188,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2016-05-03
+396189-397212,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2016-05-03
+397213-398236,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2018-08-09
+398237-399260,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2018-08-09
+399261-400284,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2020-11-02
+400285-401308,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2020-11-02
+401309-402332,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2024-04-10
+402333-403356,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2026-03-14
+403357-404380,Assigned by ARIN,whois.arin.net,"https://rdap.arin.net/registry
+http://rdap.arin.net/registry",,2026-03-14
+404381-4199999999,Unallocated,,,,
+4200000000-4294967294,Reserved for Private Use,,,[RFC 6996],
+4294967295,Reserved,,,[RFC 7300],
