@@ -22,7 +22,7 @@
     const chart = new HilbertChart(document.getElementById('ipv6-chart'), { useCanvas: true })
       .hilbertOrder(128 / 2)
       .rangePaddingAbsolute(1)
-      .minCurveWidth(0.001)
+      .minCurveWidth(0.05)
       .valFormatter(ipFormatter)
       .showValTooltip(false)
       .rangeColor(d => d.infos ? 'rgba(0,0,128,0.07)' : 'rgba(255,50,0,0.45)')
@@ -46,8 +46,8 @@
       });
       chart.data([...chart.data(), ...parseIpData(data)]);
 
-      // Focus on the most used unicast RIR allocations
-      setTimeout(() => chart.focusOn(new Ip.Addr('2001:', false).toNum(), 2n ** (128n - 16n),  5000), 800);
+      // Focus on unicast RIR allocations
+      setTimeout(() => chart.focusOn(new Ip.Addr('2001:', false).toNum(), 2n ** (128n - 5n),  3000), 800);
     });
 
     // Get BGP routing table data
