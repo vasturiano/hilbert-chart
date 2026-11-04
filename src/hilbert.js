@@ -302,6 +302,7 @@ export default Kapsule({
       // Hover detection based on interval tree
       if (state.useCanvas && (state.onRangeHover || state.showRangeTooltip)) {
         const hoverDs = !state.intervalTree ? [] : state.intervalTree.search(val, val)
+          .filter(d => d.high > val)
           .map(d => d.data)
           .sort((a, b) => numberComparator(a.length, b.length)); // prefer smaller cells
         const hoverD = hoverDs.length ? hoverDs[0] : null;
