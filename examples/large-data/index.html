@@ -1,0 +1,36 @@
+<head>
+  <title>Hilbert Canvas with 1M items</title>
+
+  <script src='//cdn.jsdelivr.net/npm/hilbert-chart'></script>
+<!--  <script src='../../dist/hilbert-chart.js'></script>-->
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+    }
+    #hilbert-chart { display: inline-block; }
+  </style>
+</head>
+<body>
+<div id='hilbert-chart'></div>
+
+<script type="module">
+  const ORDER = 10; // ~1M cells
+  const numBlocks = 2**(ORDER*2);
+  console.log(numBlocks);
+  const blockData = [... new Array(numBlocks)].map((_, i) => ({
+    start: i,
+    length: 1,
+    color: ['red', 'green', 'blue', 'yellow', 'orange', 'cyan'][Math.floor(Math.random()*6)]
+  }));
+
+  const chart = new HilbertChart(document.getElementById('hilbert-chart'), { useCanvas: true })
+    .hilbertOrder(ORDER)
+    .data(blockData)
+    .rangeColor('color')
+    .minCurveWidth(0)
+    .showValTooltip(false)
+    .onRangeClick(d => chart.focusOn(d.start, d.length, 3000));
+</script>
+</body>
