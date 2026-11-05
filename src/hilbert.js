@@ -77,7 +77,7 @@ export default Kapsule({
             t,
             Object.assign({
               duration: transitionDuration / 1000,
-              ease: 'power1.inOut',
+              ease: 'power3.inOut',
               onUpdate: () => {
                 state.zooming = true;
                 state.zoom.transform(state.zoom.__baseElem, new ZoomTransform(t.k, t.x, t.y))
