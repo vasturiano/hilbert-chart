@@ -11,7 +11,6 @@ const { name, homepage, version, dependencies, peerDependencies } = pkg;
 const umdConf = {
   format: 'umd',
   name: 'HilbertChart',
-  strict: false, // heatmap.js not strict
   banner: `// Version ${version} ${name} - ${homepage}`
 };
 
