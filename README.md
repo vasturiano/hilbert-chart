@@ -16,6 +16,8 @@ Supports optional rendering on Canvas to handle very large datasets, and feature
 
 Uses [d3-hilbert](https://github.com/vasturiano/d3-hilbert) for the layout computation.
 
+See also the [3D version](https://github.com/vasturiano/hilbert-chart-3d).
+
 ## Examples
 
 * [IPv4 Address Space](https://vasturiano.github.io/hilbert-chart/examples/ipv4-address-space/) ([source](https://github.com/vasturiano/hilbert-chart/blob/master/examples/ipv4-address-space/index.html))
